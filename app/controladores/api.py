@@ -30,7 +30,6 @@ class ApiController:
         # menor a 15 min, entre 15 a 30 min, entre 30 a 50 min y mas de 1hr
         #while i < len(info.get('filas')) - 1:
         if info.get('b') == 0:
-            print(info.get('b'))
             #Hora del día
             hrdesde, mdesde = map(int,info.get('hrdesde').split(":"))
             hrhasta, mhasta = map(int,info.get('hrhasta').split(":"))

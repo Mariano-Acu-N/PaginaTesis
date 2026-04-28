@@ -16,6 +16,8 @@ class SimularClimaYBuscarPuntos {
     // --- LÓGICA DE INTERFAZ ---
 
     gestionarInputsUbicacion(metodo) {
+        this.metodoUbicacionActual = metodo; // Guardamos si es 'ciudad', 'coord' o 'cp'
+
         const config = {
             ciudad: ['input-ciudad'],
             coord: ['input-lat', 'input-lng'],
@@ -57,29 +59,46 @@ class SimularClimaYBuscarPuntos {
     // --- LÓGICA DE SIMULACIÓN ---
 
     manejarSubmit(event) {
-        event.preventDefault();
+    event.preventDefault();
 
-        // Obtenemos valores de ubicación (el que no esté disabled)
-        const city = document.getElementById('input-ciudad').value;
-        const lat = document.getElementById('input-lat').value;
-        const lng = document.getElementById('input-lng').value;
-        const cp = document.getElementById('input-cp').value;
+    // 1. Declaramos las variables vacías
+    let city = null;
+    let lat = null;
+    let lng = null;
+    let cp = null;
 
-        // 1. Simular Geográfico si está activo
-        if (document.getElementById('checkPois').checked) {
-            this.simularContextoGeografico(city, cp, lat, lng);
-        }
-
-        // 2. Simular Ambiente si está activo
-        if (document.getElementById('checkClima').checked) {
-            this.simularContextoAmbiental(city, cp, lat, lng);
-        }
-
-        // 3. Simular Tiempo si está activo
-        if (document.getElementById('checkTiempo').checked) {
-            this.simularContextoTemporal();
-        }
+    // 2. Capturamos DATOS ÚNICAMENTE de la solapa activa
+    // Esto evita que si hay algo escrito en "Coordenadas" pero estás en "Ciudad", se mezcle.
+    if (this.metodoUbicacionActual === 'ciudad') {
+        city = document.getElementById('input-ciudad').value;
+    } 
+    else if (this.metodoUbicacionActual === 'coord') {
+        lat = document.getElementById('input-lat').value;
+        lng = document.getElementById('input-lng').value;
+    } 
+    else if (this.metodoUbicacionActual === 'cp') {
+        cp = document.getElementById('input-cp').value;
     }
+
+    // 3. Ejecución condicional (Solo si el switch está ON y no hay datos previos)
+    // Usamos las validaciones para no repetir simulaciones ya hechas
+    
+    // --- SIMULACIÓN GEOGRÁFICA ---
+    if (document.getElementById('checkPois').checked) {
+        this.simularContextoGeografico(city, cp, lat, lng);
+    }
+
+    // --- SIMULACIÓN AMBIENTAL ---
+    if (document.getElementById('checkClima').checked) {
+        // Pasamos los datos de ubicación por si el clima depende de la zona
+        this.simularContextoAmbiental(city, cp, lat, lng);
+    }
+
+    // --- SIMULACIÓN TEMPORAL ---
+    if (document.getElementById('checkTiempo').checked) {
+        this.simularContextoTemporal();
+    }
+}
 
     ////////////////////////// --- CONTEXTO TEMPORAL --- //////////////////////////
     simularContextoTemporal() {
