@@ -1,0 +1,99 @@
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f8f9fa;
+    color: #333;
+}
+
+.card {
+    transition: all 0.3s ease;
+}
+
+.section-content {
+    display: none;
+}
+
+.nav-pills .nav-link {
+    border-radius: 8px;
+    color: #666;
+}
+
+.nav-pills .nav-link.active {
+    background-color: #0d6efd;
+}
+
+.form-label-custom {
+    font-size: 0.8rem;
+    font-weight: bold;
+    color: #6c757d;
+    text-transform: uppercase;
+}
+
+#map-container {
+    min-height: 450px;
+    background-color: #e9ecef;
+    border-bottom: 1px solid #dee2e6;
+    position: relative;
+}
+
+.btn-generate {
+    transition: all 0.3s ease;
+}
+
+.btn-generate:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.2);
+}
+
+.section-content {
+    display: none;
+}
+
+
+/*.d-flex {
+    display: flex;
+    justify-content: flex-end; Centra los botones
+    gap: 350px; /* Espacio entre los botones
+}
+
+#generar-btn {
+    margin-right: 190px; Ajusta el valor según el espacio que desees
+    margin-top: 25px;
+}
+
+#btn-horas {
+    margin-right: 190px; Ajusta el valor según el espacio que desees
+    margin-top: 12px;
+}
+
+ Contenedor Flexbox para alinear tablas
+  .contenedor-tablasPron {
+    display: flex;
+    gap: 20px;  Espacio entre tablas 
+    justify-content: center;  Centra las tablas en la página 
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+
+   Contenedor Flexbox para alinear tablas 
+  .contenedor-tablasUbi {
+    display: flex;
+    gap: 20px;  Espacio entre tablas 
+    justify-content: center;  Centra las tablas en la página 
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+
+  #tablaPronostico, #tablaHora {
+    border-collapse: collapse;
+    width: 50%;  Ajusta el ancho para que quepan 
+  }
+
+  #tablaTLibre {
+    width: 20%;
+  }
+
+  th, td {
+    border: 1px solid black;
+    padding: 8px;
+    text-align: left;
+  }*/
