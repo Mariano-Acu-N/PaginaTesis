@@ -7,6 +7,9 @@ class Run:
     def run_app(self):
         self.app.run(debug=True)
 
+runner = Run()
+app = runner.app
+
 if __name__ == '__main__':
-    runner = Run()
+    # runner = Run()
     runner.run_app()        
