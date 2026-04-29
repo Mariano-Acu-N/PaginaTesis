@@ -46,7 +46,6 @@ class ApiController:
             data['tiempo'].append({'unidad_medida_tiempo_libre': 'minutos'})
         else:
             #Hora del día
-            print(info.get('b'))
             #hrdesde, mdesde = map(int,info.get('hrdesde').split(":"))
             #hrhasta, mhasta = map(int,info.get('hrhasta').split(":"))
             total_min_desde = 0 # La hora 00:00
