@@ -105,6 +105,48 @@
                                 <label class="form-check-label fw-bold small">AMBIENTE (CLIMA)</label>
                             </div>
                         </div>
+                        <div class="card-body section-content" id="content-clima" style="display: none;">
+                            <label class="form-label-custom d-block mb-2">Método de Obtención</label>
+                            <div class="d-flex gap-3 mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="metodoClima" id="radioClimaAPI"
+                                        value="api" checked onchange="simulador.actualizarInterfazClima()">
+                                    <label class="form-check-label small" for="radioClimaAPI">Datos Reales (API)</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="metodoClima"
+                                        id="radioClimaManual" value="manual"
+                                        onchange="simulador.actualizarInterfazClima()">
+                                    <label class="form-check-label small" for="radioClimaManual">Manual (Ingresar
+                                        datos)</label>
+                                </div>
+                            </div>
+
+                            <div id="grupo-clima-inputs">
+                                <div class="row g-2 mb-2">
+                                    <div class="col-6"><input type="number" class="form-control" id="tempMin"
+                                            placeholder="T. Min" disabled></div>
+                                    <div class="col-6"><input type="number" class="form-control" id="tempMax"
+                                            placeholder="T. Max" disabled></div>
+                                </div>
+                                <div class="row g-2">
+                                    <div class="col-6"><input type="number" class="form-control" id="humDes"
+                                            placeholder="H. Des" disabled></div>
+                                    <div class="col-6"><input type="number" class="form-control" id="humFluc"
+                                            placeholder="H. Fluc" disabled></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!--<div class="card shadow-sm mb-3 border-start border-4 border-secondary opacity-75" id="card-clima">
+                        <div class="card-header bg-white py-2">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="checkClima"
+                                    onchange="simulador.toggleSection('clima')">
+                                <label class="form-check-label fw-bold small">AMBIENTE (CLIMA)</label>
+                            </div>
+                        </div>
                         <div class="card-body section-content" id="content-clima">
                             <label class="form-label-custom">Temperatura</label>
                             <div class="row g-2">
@@ -120,7 +162,6 @@
                                 <div class="col-6"><input type="number" class="form-control" id="humFluc"
                                         placeholder="H. Fluc" disabled></div>
                             </div>
-                            <!-- Multiple inputs -->
                             <div class="form-check">
                                 <label class="form-check-label" for="check">Simular con temperatura y humedad
                                     ingresados</label>
@@ -128,9 +169,67 @@
                                     value="checkTempHum">
                             </div>
                         </div>
-                    </div>
+                    </div>-->
 
                     <div class="card shadow-sm mb-3 border-start border-4 border-secondary opacity-75" id="card-tiempo">
+                        <div class="card-header bg-white py-2">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="checkTiempo"
+                                    onchange="simulador.toggleSection('tiempo')">
+                                <label class="form-check-label fw-bold small">TEMPORAL</label>
+                            </div>
+                        </div>
+
+                        <div class="card-body section-content" id="content-tiempo">
+                            <label class="form-label-custom d-block mb-2">Método de Simulación</label>
+                            <div class="d-flex gap-3 mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="metodoTpo" id="radioLaplace"
+                                        value="laplace" checked onchange="simulador.actualizarInterfazTemporal()">
+                                    <label class="form-check-label small" for="radioLaplace">Laplace (Prob.
+                                        fijas)</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="metodoTpo" id="radioManual"
+                                        value="manual" onchange="simulador.actualizarInterfazTemporal()">
+                                    <label class="form-check-label small" for="radioManual">Manual (Ingresar
+                                        datos)</label>
+                                </div>
+                            </div>
+
+                            <label class="form-label-custom">Configuración General</label>
+                            <div class="row g-2 mb-3">
+                                <div class="col-6"><input type="text" class="form-control" id="hrMin"
+                                        placeholder="Minima (HH:MM)"></div>
+                                <div class="col-6"><input type="text" class="form-control" id="hrMax"
+                                        placeholder="Maxima (HH:MM)"></div>
+                            </div>
+                            <div class="input-group mb-3">
+                                <span class="input-group-text">Mostrar</span>
+                                <input type="number" id="cantTLibre" class="form-control" placeholder="Cantidad"
+                                    min="1">
+                            </div>
+
+                            <div id="grupo-probabilidades">
+                                <label class="form-label-custom">Probabilidades de Tiempo Libre</label>
+                                <div class="row g-2 mb-2">
+                                    <div class="col-6"><input type="text" id="prob1" class="form-control"
+                                            placeholder="< 15 min"></div>
+                                    <div class="col-6"><input type="text" id="prob2" class="form-control"
+                                            placeholder="15-30 min"></div>
+                                </div>
+                                <div class="row g-2 mb-2">
+                                    <div class="col-6"><input type="text" id="prob3" class="form-control"
+                                            placeholder="30-50 min"></div>
+                                    <div class="col-6"><input type="text" id="prob4" class="form-control"
+                                            placeholder="1 hr o más"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <!--<div class="card shadow-sm mb-3 border-start border-4 border-secondary opacity-75" id="card-tiempo">
                         <div class="card-header bg-white py-2">
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" id="checkTiempo"
@@ -171,7 +270,7 @@
                                     placeholder="Cantidad" step="1" min="1" disabled>
                             </div>
                         </div>
-                    </div>
+                    </div>-->
 
                     <button type="submit" class="btn btn-dark w-100 py-3 fw-bold mt-3">GENERAR ESCENARIO
                         SINTÉTICO</button>
@@ -196,7 +295,7 @@
                                     <tr>
                                         <th>Nombre</th>
                                         <th>Lat</th>
-                                        <th>Lng</th>
+                                        <th>Lon</th>
                                         <th>¿En UNSE?</th>
                                     </tr>
                                 </thead>

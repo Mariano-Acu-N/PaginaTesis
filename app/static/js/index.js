@@ -37,7 +37,7 @@ class SimularClimaYBuscarPuntos {
         });
     }
 
-    toggleSection(sectionId) {
+    /*toggleSection(sectionId) {
         const isChecked = document.getElementById('check' + sectionId.charAt(0).toUpperCase() + sectionId.slice(1)).checked;
         const card = document.getElementById('card-' + sectionId);
         const content = document.getElementById('content-' + sectionId);
@@ -54,51 +54,132 @@ class SimularClimaYBuscarPuntos {
             content.style.display = 'none';
             inputs.forEach(i => { i.disabled = true; i.value = ''; });
         }
+    }*/
+
+    toggleSection(sectionId) {
+        const isChecked = document.getElementById('check' + sectionId.charAt(0).toUpperCase() + sectionId.slice(1)).checked;
+        const card = document.getElementById('card-' + sectionId);
+        const content = document.getElementById('content-' + sectionId);
+        const inputs = content.querySelectorAll('input, select');
+
+        if (isChecked) {
+            card.classList.remove('opacity-75', 'border-secondary');
+            card.classList.add('border-danger');
+            content.style.display = 'block';
+
+            // 1. Habilitamos todos los inputs base (incluyendo los radio buttons)
+            inputs.forEach(i => i.disabled = false);
+
+            // 2. Aplicamos filtros específicos según la sección
+            if (sectionId === 'tiempo') {
+                // Si es Tiempo, decide si bloquea probabilidades (Laplace vs Manual)
+                this.actualizarInterfazTemporal();
+            }
+            else if (sectionId === 'clima') {
+                // Si es Clima, decide si bloquea temperatura/humedad (API vs Manual)
+                this.actualizarInterfazClima();
+            }
+
+        } else {
+            card.classList.add('opacity-75', 'border-secondary');
+            card.classList.remove('border-danger');
+            content.style.display = 'none';
+
+            /*// Al apagar, deshabilitamos y limpiamos todo
+            inputs.forEach(i => { i.disabled = true; i.value = ''; });
+
+            // Resetear datos globales
+            if (sectionId === 'pois') this.dataGlobal.puntos = null;
+            if (sectionId === 'clima') this.dataGlobal.clima = null;
+            if (sectionId === 'tiempo') this.dataGlobal.tiempo = null;*/
+        }
+    }
+
+    actualizarInterfazTemporal() {
+        // Verificamos si la opción seleccionada es Laplace
+        const esLaplace = document.getElementById('radioLaplace').checked;
+
+        // Obtenemos todos los inputs dentro del contenedor de probabilidades
+        const inputsProb = document.querySelectorAll('#grupo-probabilidades input');
+
+        inputsProb.forEach(input => {
+            // Bloqueamos si es Laplace, habilitamos si es Manual
+            input.disabled = esLaplace;
+
+            if (esLaplace) {
+                // Opcional: Limpiar el valor o mostrar un indicador de que se usarán valores internos
+                input.value = "";
+                input.classList.add('bg-light'); // Le da un tono grisáceo para notar el bloqueo
+            } else {
+                input.classList.remove('bg-light');
+                input.focus(); // Opcional: poner el foco en el primero para invitar a escribir
+            }
+        });
+    }
+
+    actualizarInterfazClima() {
+        // 1. Detectamos si la opción "API" está marcada
+        const esAPI = document.getElementById('radioClimaAPI').checked;
+
+        // 2. Buscamos todos los inputs de la sección ambiente
+        const inputs = document.querySelectorAll('#grupo-clima-inputs input');
+
+        inputs.forEach(input => {
+            // 3. Si es API, desactivamos (disabled = true). Si es Manual, activamos (false)
+            input.disabled = esAPI;
+
+            if (esAPI) {
+                input.value = ""; // Limpiamos para que no queden datos viejos
+                input.classList.add('bg-light'); // Efecto visual de campo bloqueado
+            } else {
+                input.classList.remove('bg-light'); // Restauramos el aspecto normal
+            }
+        });
     }
 
     // --- LÓGICA DE SIMULACIÓN ---
 
     manejarSubmit(event) {
-    event.preventDefault();
+        event.preventDefault();
 
-    // 1. Declaramos las variables vacías
-    let city = null;
-    let lat = null;
-    let lng = null;
-    let cp = null;
+        // 1. Declaramos las variables vacías
+        let city = null;
+        let lat = null;
+        let lng = null;
+        let cp = null;
 
-    // 2. Capturamos DATOS ÚNICAMENTE de la solapa activa
-    // Esto evita que si hay algo escrito en "Coordenadas" pero estás en "Ciudad", se mezcle.
-    if (this.metodoUbicacionActual === 'ciudad') {
-        city = document.getElementById('input-ciudad').value;
-    } 
-    else if (this.metodoUbicacionActual === 'coord') {
-        lat = document.getElementById('input-lat').value;
-        lng = document.getElementById('input-lng').value;
-    } 
-    else if (this.metodoUbicacionActual === 'cp') {
-        cp = document.getElementById('input-cp').value;
+        // 2. Capturamos DATOS ÚNICAMENTE de la solapa activa
+        // Esto evita que si hay algo escrito en "Coordenadas" pero estás en "Ciudad", se mezcle.
+        if (this.metodoUbicacionActual === 'ciudad') {
+            city = document.getElementById('input-ciudad').value;
+        }
+        else if (this.metodoUbicacionActual === 'coord') {
+            lat = document.getElementById('input-lat').value;
+            lng = document.getElementById('input-lng').value;
+        }
+        else if (this.metodoUbicacionActual === 'cp') {
+            cp = document.getElementById('input-cp').value;
+        }
+
+        // 3. Ejecución condicional (Solo si el switch está ON y no hay datos previos)
+        // Usamos las validaciones para no repetir simulaciones ya hechas
+
+        // --- SIMULACIÓN GEOGRÁFICA ---
+        if (document.getElementById('checkPois').checked) {
+            this.simularContextoGeografico(city, cp, lat, lng);
+        }
+
+        // --- SIMULACIÓN AMBIENTAL ---
+        if (document.getElementById('checkClima').checked) {
+            // Pasamos los datos de ubicación por si el clima depende de la zona
+            this.simularContextoAmbiental(city, cp, lat, lng);
+        }
+
+        // --- SIMULACIÓN TEMPORAL ---
+        if (document.getElementById('checkTiempo').checked) {
+            this.simularContextoTemporal();
+        }
     }
-
-    // 3. Ejecución condicional (Solo si el switch está ON y no hay datos previos)
-    // Usamos las validaciones para no repetir simulaciones ya hechas
-    
-    // --- SIMULACIÓN GEOGRÁFICA ---
-    if (document.getElementById('checkPois').checked) {
-        this.simularContextoGeografico(city, cp, lat, lng);
-    }
-
-    // --- SIMULACIÓN AMBIENTAL ---
-    if (document.getElementById('checkClima').checked) {
-        // Pasamos los datos de ubicación por si el clima depende de la zona
-        this.simularContextoAmbiental(city, cp, lat, lng);
-    }
-
-    // --- SIMULACIÓN TEMPORAL ---
-    if (document.getElementById('checkTiempo').checked) {
-        this.simularContextoTemporal();
-    }
-}
 
     ////////////////////////// --- CONTEXTO TEMPORAL --- //////////////////////////
     simularContextoTemporal() {
@@ -109,11 +190,13 @@ class SimularClimaYBuscarPuntos {
         const p2 = parseFloat(document.getElementById("prob2").value) / 100;
         const p3 = parseFloat(document.getElementById("prob3").value) / 100;
         const p4 = parseFloat(document.getElementById("prob4").value) / 100;
-        const checkTL = document.getElementById('checkTL').checked;
+        //const checkTL = document.getElementById('checkTL').checked;
+        const esLaplace = document.getElementById('radioLaplace').checked;
         if (hrMin) {
             if (hrMax) {
                 if (!Number.isNaN(cantTLibre)) {
-                    checkTL ? this.generarHr_Tiempos(hrMin, hrMax, cantTLibre, p1, p2, p3, p4, 1) : this.generarHr_Tiempos(hrMin, hrMax, cantTLibre, p1, p2, p3, p4, 0);
+                    esLaplace ? this.generarHr_Tiempos(hrMin, hrMax, cantTLibre, p1, p2, p3, p4, 0) : this.generarHr_Tiempos(hrMin, hrMax, cantTLibre, p1, p2, p3, p4, 1);
+                    /*checkTL ? this.generarHr_Tiempos(hrMin, hrMax, cantTLibre, p1, p2, p3, p4, 1) : this.generarHr_Tiempos(hrMin, hrMax, cantTLibre, p1, p2, p3, p4, 0);*/
                 } else { alert("Debe ingresar una cantidad para generar los datos de tiempo libre"); }
             } else { alert("Debe ingresar una hora de fin"); }
         } else { alert("Debe ingresar una hora de inicio"); }
@@ -320,6 +403,44 @@ class SimularClimaYBuscarPuntos {
     ////////////////////////// --- CONTEXTO AMBIENTAL --- //////////////////////////
 
     simularContextoAmbiental(city, cp, lat, lng) {
+        // 1. Verificamos cuál método está seleccionado (API o Manual)
+        const esAPI = document.getElementById("radioClimaAPI").checked;
+
+        // 2. Validación de Ubicación (Requisito para ambos métodos)
+        const tieneUbicacion = city || cp || (lat && lng);
+
+        if (!tieneUbicacion) {
+            alert("Debe ingresar una ubicación válida para simular el ambiente.");
+            return; // Cortamos la ejecución si no hay ubicación
+        }
+
+        // 3. Validación de Coordenadas (Solo si se eligió esa solapa)
+        if (lat && lng) {
+            const esLatValida = isFinite(lat) && Math.abs(lat) <= 90;
+            const esLonValida = isFinite(lng) && Math.abs(lng) <= 180;
+
+            if (!esLatValida || !esLonValida) {
+                alert("Las coordenadas ingresadas no son válidas.");
+                return;
+            }
+        }
+
+        // 4. Lógica de Disparo
+        if (esAPI) {
+            // Si es API, llamamos a tu función que busca datos reales (OpenWeather, etc.)
+            console.log("Simulando Clima con datos de API real...");
+            this.noncheckboxTempHum(city, cp, lat, lng);
+        } else {
+            // Si es Manual, llamamos a la función que captura tus inputs (T. Min, T. Max, etc.)
+            console.log("Simulando Clima con datos manuales ingresados...");
+            this.checkboxTempHum();
+        }
+    }
+
+
+
+
+    /*simularContextoAmbiental(city, cp, lat, lng) {
         const checkTempHum = document.getElementById("checkTempHum").checked;
 
         if (city || cp || (lat && lng)) {
@@ -343,7 +464,7 @@ class SimularClimaYBuscarPuntos {
         else {
             alert("Debe ingresar una ubicación");
         }
-    }
+    }*/
 
     checkboxTempHum() {
         const info = this.obtenerDatosTempHum();
