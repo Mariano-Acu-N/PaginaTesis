@@ -29,16 +29,29 @@ class ApiController:
         #Tiempo libre o disponible
         # menor a 15 min, entre 15 a 30 min, entre 30 a 50 min y mas de 1hr
         #while i < len(info.get('filas')) - 1:
-        if info.get('b') == 0:
-            #Hora del día
-            hrdesde, mdesde = map(int,info.get('hrdesde').split(":"))
-            hrhasta, mhasta = map(int,info.get('hrhasta').split(":"))
+        # hrdesde, mdesde = map(int,info.get('hrdesde').split(":"))
+        # hrhasta, mhasta = map(int,info.get('hrhasta').split(":"))
+        try:
+            hrdesde, mdesde = self.procesar_hora(info.get('hrdesde'))
+            hrhasta, mhasta = self.procesar_hora(info.get('hrhasta'))
             total_min_desde = hrdesde * 60 + mdesde
             total_min_hasta = hrhasta * 60 + mhasta
             total_min_nuevo = self.uniforme(total_min_desde, total_min_hasta)
             hrnueva = int((total_min_nuevo // 60) % 24)
             minnuevos = int(total_min_nuevo % 60)
             data['tiempo'].append({'hr_del_dia': f"{hrnueva}:{minnuevos}", 'unidad_medida_hr_del_dia': '24hr'})
+        except Exception as e:
+            print(f"Error procesando formato de hora: {e}")
+        if info.get('b') == 0:
+            #Hora del día
+            # hrdesde, mdesde = map(int,info.get('hrdesde').split(":"))
+            # hrhasta, mhasta = map(int,info.get('hrhasta').split(":"))
+            # total_min_desde = hrdesde * 60 + mdesde
+            # total_min_hasta = hrhasta * 60 + mhasta
+            # total_min_nuevo = self.uniforme(total_min_desde, total_min_hasta)
+            # hrnueva = int((total_min_nuevo // 60) % 24)
+            # minnuevos = int(total_min_nuevo % 60)
+            # data['tiempo'].append({'hr_del_dia': f"{hrnueva}:{minnuevos}", 'unidad_medida_hr_del_dia': '24hr'})
             while i < info.get('cantTLibre'):
                 tiempo_libre = self.transInvFunDiscSinProb() #minutos
                 data['tiempo'].append({'tiempo_libre': tiempo_libre})
@@ -48,18 +61,29 @@ class ApiController:
             #Hora del día
             #hrdesde, mdesde = map(int,info.get('hrdesde').split(":"))
             #hrhasta, mhasta = map(int,info.get('hrhasta').split(":"))
-            total_min_desde = 0 # La hora 00:00
-            total_min_hasta = 23 * 60 + 59 #La hora 23:59
-            total_min_nuevo = self.uniforme(total_min_desde, total_min_hasta)
-            hrnueva = int((total_min_nuevo // 60) % 24)
-            minnuevos = int(total_min_nuevo % 60)
-            data['tiempo'].append({'hr_del_dia': f"{hrnueva}:{minnuevos}", 'unidad_medida_hr_del_dia': '24hr'})
+            # total_min_desde = 0 # La hora 00:00
+            # total_min_hasta = 23 * 60 + 59 #La hora 23:59
+            # total_min_nuevo = self.uniforme(total_min_desde, total_min_hasta)
+            # hrnueva = int((total_min_nuevo // 60) % 24)
+            # minnuevos = int(total_min_nuevo % 60)
+            # data['tiempo'].append({'hr_del_dia': f"{hrnueva}:{minnuevos}", 'unidad_medida_hr_del_dia': '24hr'})
             while i < info.get('cantTLibre'):
                 tiempo_libre = self.transInvFunDiscConProb(info.get('p1'),info.get('p2'),info.get('p3')) #minutos
                 data['tiempo'].append({'tiempo_libre': tiempo_libre})
                 i+=1
             data['tiempo'].append({'unidad_medida_tiempo_libre': 'minutos'})
         return jsonify(data['tiempo'])
+
+    def procesar_hora(self, hora_str):
+    # Verificamos si la cadena contiene los dos puntos
+        if ":" in hora_str:
+            hr, m = map(int, hora_str.split(":"))
+        else:
+            # Si no hay ":", asumimos que son solo horas y ponemos 0 minutos
+            hr = int(hora_str)
+            m = 0
+        return hr, m
+
 
 ############################# --- CONTEXTO AMBIENTAL --- #############################
 
