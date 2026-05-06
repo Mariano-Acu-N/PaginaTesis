@@ -269,11 +269,11 @@ class ApiController:
     
     def transInvFunDiscConProb(self, p1, p2, p3):
         u = self.generate_u()
-        if (u <= p1):
+        if u <= p1:
             x = 'Menos de 15 min'
-        elif (u <= p1 + p2):
+        elif u <= (p1 + p2):
             x = 'Entre 15 y 30 min'
-        elif (u <= p1 + p2 + p3):
+        elif u <= (p1 + p2 + p3):
             x = 'Entre 30 y 50 min'
         else:
             x = '1 hora o mas'

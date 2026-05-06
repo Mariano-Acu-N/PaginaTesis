@@ -98,14 +98,11 @@ class SimularClimaYBuscarPuntos {
     actualizarInterfazTemporal() {
         // Verificamos si la opción seleccionada es Laplace
         const esLaplace = document.getElementById('radioLaplace').checked;
-
         // Obtenemos todos los inputs dentro del contenedor de probabilidades
         const inputsProb = document.querySelectorAll('#grupo-probabilidades input');
-
         inputsProb.forEach(input => {
             // Bloqueamos si es Laplace, habilitamos si es Manual
             input.disabled = esLaplace;
-
             if (esLaplace) {
                 // Opcional: Limpiar el valor o mostrar un indicador de que se usarán valores internos
                 input.value = "";
