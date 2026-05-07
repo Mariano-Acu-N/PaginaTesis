@@ -53,7 +53,7 @@ class ApiController:
             # minnuevos = int(total_min_nuevo % 60)
             # data['tiempo'].append({'hr_del_dia': f"{hrnueva}:{minnuevos}", 'unidad_medida_hr_del_dia': '24hr'})
             while i < info.get('cantTLibre'):
-                tiempo_libre = self.transInvFunDiscSinProb() #minutos
+                tiempo_libre = self.laplace() #minutos
                 data['tiempo'].append({'tiempo_libre': tiempo_libre})
                 i+=1
             data['tiempo'].append({'unidad_medida_tiempo_libre': 'minutos'})
@@ -68,7 +68,7 @@ class ApiController:
             # minnuevos = int(total_min_nuevo % 60)
             # data['tiempo'].append({'hr_del_dia': f"{hrnueva}:{minnuevos}", 'unidad_medida_hr_del_dia': '24hr'})
             while i < info.get('cantTLibre'):
-                tiempo_libre = self.transInvFunDiscConProb(info.get('p1'),info.get('p2'),info.get('p3')) #minutos
+                tiempo_libre = self.transInvFunDisc(info.get('p1'),info.get('p2'),info.get('p3')) #minutos
                 data['tiempo'].append({'tiempo_libre': tiempo_libre})
                 i+=1
             data['tiempo'].append({'unidad_medida_tiempo_libre': 'minutos'})
@@ -255,7 +255,7 @@ class ApiController:
         valor = sigma * (sumu - 6) + mu
         return valor
     
-    def transInvFunDiscSinProb(self):
+    def laplace(self):
         u = self.generate_u()
         if (u <= 0.25 ):
             x = 'Menos de 15 min'
@@ -267,7 +267,7 @@ class ApiController:
             x = '1 hora o mas'
         return x
     
-    def transInvFunDiscConProb(self, p1, p2, p3):
+    def transInvFunDisc(self, p1, p2, p3):
         u = self.generate_u()
         if u <= p1:
             x = 'Menos de 15 min'
