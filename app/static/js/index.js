@@ -604,7 +604,7 @@ class SimularClimaYBuscarPuntos {
                         //alert("Debe ingresar un valor de Fluctuación de humedad");
                         Swal.fire({
                             title: '¡Atención!',
-                            text: 'Debe ingresar un valor de Fluctuación de humedad',
+                            text: 'Debe ingresar un valor de Variación de la humedad',
                             icon: 'warning',
                             confirmButtonText: 'Aceptar',
                             confirmButtonColor: '#3085d6'
@@ -614,7 +614,7 @@ class SimularClimaYBuscarPuntos {
                     //alert("Debe ingresar un valor Deseado de humedad");
                     Swal.fire({
                         title: '¡Atención!',
-                        text: 'Debe ingresar un valor Deseado de humedad',
+                        text: 'Debe ingresar un valor Base/Media de humedad',
                         icon: 'warning',
                         confirmButtonText: 'Aceptar',
                         confirmButtonColor: '#3085d6'
