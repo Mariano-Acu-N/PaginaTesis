@@ -126,6 +126,8 @@ class ApiController:
         lim_inf = 0
         lim_sup = 2 * math.pi
         info = request.get_json()
+        print(info)
+        print(info.get('cantPoints'))
         # (Longitud, Latitud) -> (x, y), el primer y ultimo punto deben ser iguales para cerrar el poligono
         # Coordenas del poligono para abarcar la UNSE
         coords_area = [(-64.25139019422534, -27.802016156660176),
@@ -152,7 +154,7 @@ class ApiController:
             lat = float(info.get('lat'))
             lon = float(info.get('lon'))
         radio = info.get('radio')
-        while encontrados < info.get('cant'):
+        while encontrados < int(info.get('cantPoints')):
             posX, posY = self.uniformPosGeograficas(lim_inf, lim_sup, lat, lon, radio)
             punto = Point(posY, posX)
             esta_dentro = poligono.contains(punto)

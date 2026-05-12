@@ -192,11 +192,36 @@ class SimularClimaYBuscarPuntos {
         if (hrMin) {
             if (hrMax) {
                 if (!Number.isNaN(cantTLibre)) {
-                    esLaplace ? this.generarHr_Tiempos(hrMin, hrMax, cantTLibre, p1, p2, p3, p4, 0) : this.generarHr_Tiempos(hrMin, hrMax, cantTLibre, p1, p2, p3, p4, 1);
+                    esLaplace ? this.generarHr_Tiempos(hrMin, hrMax, cantTLibre, p1, p2, p3, p4, 0) : this.validarProbTransInvDisc(hrMin, hrMax, cantTLibre, p1, p2, p3, p4, 1)
                     /*checkTL ? this.generarHr_Tiempos(hrMin, hrMax, cantTLibre, p1, p2, p3, p4, 1) : this.generarHr_Tiempos(hrMin, hrMax, cantTLibre, p1, p2, p3, p4, 0);*/
-                } else { alert("Debe ingresar una cantidad para generar los datos de tiempo libre"); }
-            } else { alert("Debe ingresar una hora de fin"); }
-        } else { alert("Debe ingresar una hora de inicio"); }
+                } else {
+                    //alert("Debe ingresar una cantidad para generar los datos de tiempo libre");
+                    Swal.fire({
+                        title: '¡Atención!',
+                        text: 'Defina la cantidad de datos/puntos a generar para continuar.',
+                        icon: 'warning',
+                        confirmButtonText: 'Aceptar',
+                        confirmButtonColor: '#3085d6'
+                    });
+                }
+            } else { //alert("Debe ingresar una hora de fin");
+                Swal.fire({
+                    title: '¡Atención!',
+                    text: 'Por favor, indique la hora de fin para el contexto temporal.',
+                    icon: 'warning',
+                    confirmButtonText: 'Aceptar',
+                    confirmButtonColor: '#3085d6'
+                });
+            }
+        } else {
+            Swal.fire({
+                title: '¡Atención!',
+                text: 'Por favor, indique la hora de inicio para el contexto temporal.',
+                icon: 'warning',
+                confirmButtonText: 'Aceptar',
+                confirmButtonColor: '#3085d6'
+            }); //alert("Debe ingresar una hora de inicio"); 
+        }
 
         /*if (city || cp || (lat || lon)) {
             if (lat || lon) {
@@ -262,7 +287,7 @@ class SimularClimaYBuscarPuntos {
         }*/
     }
 
-    validarCoordenadas(lat, lon) {
+    /*validarCoordenadas(lat, lon) {
         // 1. Verificamos que los valores existan y no sean solo espacios
         if (String(lat).trim() === "") {
             alert("Debe ingresar una latitud valida");
@@ -280,6 +305,62 @@ class SimularClimaYBuscarPuntos {
             const lonOk = !isNaN(lonNum) && isFinite(lonNum) && Math.abs(lonNum) <= 180;
 
             return latOk && lonOk;
+        }
+    }*/
+
+    validarProbTransInvDisc(hrdesde, hrhasta, cantTLibre, p1, p2, p3, p4, b) {
+        let totalProb = 0;
+        if (!Number.isNaN(p1)) {
+            if (!Number.isNaN(p2)) {
+                if (!Number.isNaN(p3)) {
+                    if (!Number.isNaN(p4)) {
+                        totalProb = p1 + p2 + p3 + p4;
+                        if (totalProb <= 1) {
+                            this.generarHr_Tiempos(hrdesde, hrhasta, cantTLibre, p1, p2, p3, p4, 1);
+                        } else {
+                            Swal.fire({
+                                title: '¡Atención!',
+                                text: 'La suma de las probabilidades debe ser menor o igual a 100%',
+                                icon: 'warning',
+                                confirmButtonText: 'Aceptar',
+                                confirmButtonColor: '#3085d6'
+                            });
+                        }
+                    } else {
+                        Swal.fire({
+                            title: '¡Atención!',
+                            text: 'Debe ingresar una probabilidad para 1 hr o más',
+                            icon: 'warning',
+                            confirmButtonText: 'Aceptar',
+                            confirmButtonColor: '#3085d6'
+                        });
+                    }
+                } else {
+                    Swal.fire({
+                        title: '¡Atención!',
+                        text: 'Debe ingresar una probabilidad para 30-50 min',
+                        icon: 'warning',
+                        confirmButtonText: 'Aceptar',
+                        confirmButtonColor: '#3085d6'
+                    });
+                }
+            } else {
+                Swal.fire({
+                    title: '¡Atención!',
+                    text: 'Debe ingresar una probabilidad para 15-30 min',
+                    icon: 'warning',
+                    confirmButtonText: 'Aceptar',
+                    confirmButtonColor: '#3085d6'
+                });
+            }
+        } else {
+            Swal.fire({
+                title: '¡Atención!',
+                text: 'Debe ingresar una probabilidad para < 15 min',
+                icon: 'warning',
+                confirmButtonText: 'Aceptar',
+                confirmButtonColor: '#3085d6'
+            });
         }
     }
 
@@ -302,7 +383,6 @@ class SimularClimaYBuscarPuntos {
     };
 
     agregarTiempoLibreATablaCoord(data) {
-
         //const tabla = document.getElementById('tablaUbicaciones');
         const cuerpoTLibre = document.getElementById("tbodyTLibre");
         cuerpoTLibre.innerHTML = "";
@@ -367,14 +447,45 @@ class SimularClimaYBuscarPuntos {
     simularContextoGeografico(city, cp, lat, lon) {
         const category = document.getElementById("categories").value;
         const radio = document.getElementById("radio").value;
-        const cant = parseInt(document.getElementById("cantPoints").value);
+        //const cantPoints = parseInt(document.getElementById("cantPoints").value);
+        const cantPoints = document.getElementById("cantPoints").value;
+        if (radio.trim() !== "") {
+            if (cantPoints.trim() !== "") {
+                if (category.trim() !== "") {
+                    const info = { city, cp, lat, lon, category, radio, cantPoints };
+                    this.postJSON('/simularContextoGeografico', info, (data) => {
+                        this.dataGlobal.puntos = data;
+                        this.renderizarResultados(data);
+                    });
+                } else {
+                    Swal.fire({
+                        title: '¡Atención!',
+                        text: 'Debe seleccionar una categoría de la lista',
+                        icon: 'warning',
+                        confirmButtonText: 'Aceptar',
+                        confirmButtonColor: '#3085d6'
+                    });
 
-        const info = { city, cp, lat, lon, category, radio, cant };
+                }
+            } else {
+                Swal.fire({
+                    title: '¡Atención!',
+                    text: 'Defina la cantidad de datos/puntos a generar para continuar.',
+                    icon: 'warning',
+                    confirmButtonText: 'Aceptar',
+                    confirmButtonColor: '#3085d6'
+                });
+            }
+        } else {
+            Swal.fire({
+                title: '¡Atención!',
+                text: 'Debe ingresar los metros a la redonda para la búsqueda',
+                icon: 'warning',
+                confirmButtonText: 'Aceptar',
+                confirmButtonColor: '#3085d6'
+            });
 
-        this.postJSON('/simularContextoGeografico', info, (data) => {
-            this.dataGlobal.puntos = data;
-            this.renderizarResultados(data);
-        });
+        }
     }
 
     renderizarResultados(data) {
@@ -425,12 +536,16 @@ class SimularClimaYBuscarPuntos {
         // 4. Lógica de Disparo
         if (esAPI) {
             // Si es API, llamamos a tu función que busca datos reales (OpenWeather, etc.)
-            console.log("Simulando Clima con datos de API real...");
+            //console.log("Simulando Clima con datos de API real...");
             this.noncheckboxTempHum(city, cp, lat, lng);
         } else {
             // Si es Manual, llamamos a la función que captura tus inputs (T. Min, T. Max, etc.)
-            console.log("Simulando Clima con datos manuales ingresados...");
-            this.checkboxTempHum();
+            //console.log("Simulando Clima con datos manuales ingresados...");
+            const tempmin = parseFloat(document.getElementById("tempMin").value)
+            const tempmax = parseFloat(document.getElementById("tempMax").value);
+            const humDeseada = parseFloat(document.getElementById("humDes").value);
+            const humFluctuacion = parseFloat(document.getElementById("humFluc").value);
+            this.validarDatosTempHum(tempmin, tempmax, humDeseada, humFluctuacion);
         }
     }
 
@@ -463,8 +578,8 @@ class SimularClimaYBuscarPuntos {
         }
     }*/
 
-    checkboxTempHum() {
-        const info = this.obtenerDatosTempHum();
+    checkboxTempHum(tempmin, tempmax, humDeseada, humFluctuacion) {
+        const info = { tempmin, tempmax, humDeseada, humFluctuacion };
         this.postJSON('/checkboxTempHum', info, (data) => {
             this.dataGlobal.clima = data;
             this.agregarTempHumTabla(data);
@@ -479,28 +594,51 @@ class SimularClimaYBuscarPuntos {
         });
     }
 
-    obtenerDatosTempHum() {
-        if (!Number.isNaN(parseFloat(document.getElementById("tempMin").value))) {
-            if (!Number.isNaN(parseFloat(document.getElementById("tempMax").value))) {
-                if (!Number.isNaN(parseFloat(document.getElementById("humDes").value))) {
-                    if (!Number.isNaN(parseFloat(document.getElementById("humFluc").value))) {
-                        return {
-                            tempmin: parseFloat(document.getElementById("tempMin").value),
-                            tempmax: parseFloat(document.getElementById("tempMax").value),
-                            humDeseada: parseFloat(document.getElementById("humDes").value),
-                            humFluctuacion: parseFloat(document.getElementById("humFluc").value)
-                        };
+    validarDatosTempHum(tempmin, tempmax, humDeseada, humFluctuacion) {
+        if (!Number.isNaN(tempmin)) {
+            if (!Number.isNaN(tempmax)) {
+                if (!Number.isNaN(humDeseada)) {
+                    if (!Number.isNaN(humFluctuacion)) {
+                        this.checkboxTempHum(tempmin, tempmax, humDeseada, humFluctuacion);
                     } else {
-                        alert("Debe ingresar un valor de Fluctuación de humedad");
+                        //alert("Debe ingresar un valor de Fluctuación de humedad");
+                        Swal.fire({
+                            title: '¡Atención!',
+                            text: 'Debe ingresar un valor de Fluctuación de humedad',
+                            icon: 'warning',
+                            confirmButtonText: 'Aceptar',
+                            confirmButtonColor: '#3085d6'
+                        });
                     }
                 } else {
-                    alert("Debe ingresar un valor Deseado de humedad");
+                    //alert("Debe ingresar un valor Deseado de humedad");
+                    Swal.fire({
+                        title: '¡Atención!',
+                        text: 'Debe ingresar un valor Deseado de humedad',
+                        icon: 'warning',
+                        confirmButtonText: 'Aceptar',
+                        confirmButtonColor: '#3085d6'
+                    });
                 }
             } else {
-                alert("Debe ingresar un valor de Teperatura Máxima");
+                //alert("Debe ingresar un valor de Teperatura Máxima");
+                Swal.fire({
+                    title: '¡Atención!',
+                    text: 'Debe ingresar un valor de Teperatura Máxima',
+                    icon: 'warning',
+                    confirmButtonText: 'Aceptar',
+                    confirmButtonColor: '#3085d6'
+                });
             }
         } else {
-            alert("Debe ingresar un valor de Temperatura Mínima");
+            //alert("Debe ingresar un valor de Temperatura Mínima");
+            Swal.fire({
+                title: '¡Atención!',
+                text: 'Debe ingresar un valor de Temperatura Mínima',
+                icon: 'warning',
+                confirmButtonText: 'Aceptar',
+                confirmButtonColor: '#3085d6'
+            });
         }
     }
 
