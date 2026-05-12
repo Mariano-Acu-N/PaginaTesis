@@ -189,8 +189,10 @@ class SimularClimaYBuscarPuntos {
         const p4 = parseFloat(document.getElementById("prob4").value) / 100;
         //const checkTL = document.getElementById('checkTL').checked;
         const esLaplace = document.getElementById('radioLaplace').checked;
-        if (hrMin) {
-            if (hrMax) {
+        console.log(hrMin);
+        console.log(hrMax);
+        if (this.validarHora(hrMin)) {
+            if (this.validarHora(hrMax)) {
                 if (!Number.isNaN(cantTLibre)) {
                     esLaplace ? this.generarHr_Tiempos(hrMin, hrMax, cantTLibre, p1, p2, p3, p4, 0) : this.validarProbTransInvDisc(hrMin, hrMax, cantTLibre, p1, p2, p3, p4, 1)
                     /*checkTL ? this.generarHr_Tiempos(hrMin, hrMax, cantTLibre, p1, p2, p3, p4, 1) : this.generarHr_Tiempos(hrMin, hrMax, cantTLibre, p1, p2, p3, p4, 0);*/
@@ -307,6 +309,12 @@ class SimularClimaYBuscarPuntos {
             return latOk && lonOk;
         }
     }*/
+
+    validarHora(horaTexto) {
+        // Expresión regular para HH o HH:MM
+        const regex = /^([01]\d|2[0-3])(:[0-5]\d)?$/; // "24:00" = false (Hora inválida), "12:60" = false (Minuto inválido), "hola" = false
+        return regex.test(horaTexto);
+    }
 
     validarProbTransInvDisc(hrdesde, hrhasta, cantTLibre, p1, p2, p3, p4, b) {
         let totalProb = 0;
