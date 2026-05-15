@@ -595,8 +595,8 @@ class SimularClimaYBuscarPuntos {
     }
 
     noncheckboxTempHum(city, cp, lat, lng) {
-        const ciudad = city || cp; // Si city tiene valor, lo usa; si no, usa cp. En caso tener valor ambos se queda con city por ser el primero.
-        this.postJSON('/noncheckboxTempHum', { ciudad, lat, lng }, (data) => {
+        //const ciudad = city || cp; // Si city tiene valor, lo usa; si no, usa cp. En caso tener valor ambos se queda con city por ser el primero.
+        this.postJSON('/noncheckboxTempHum', { city, cp, lat, lng }, (data) => {
             this.dataGlobal.clima = data;
             this.agregarTempHumTabla(data);
         });

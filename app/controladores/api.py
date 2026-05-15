@@ -102,8 +102,12 @@ class ApiController:
         apiser = ApiService(Config.api_base_url_combo_city, Config.api_key, Config.api_type,
                             Config.api_base_url_weather, Config.api_key_weather, Config.api_type_weather)
         info = request.get_json()
-        if info.get('ciudad'):
-            pronostico = apiser.clima(info.get('ciudad'))
+        if info.get('city'):
+            pronostico = apiser.clima(info.get('city'))
+        elif info.get('cp'):
+            cpdata = apiser.buscar_coord_ciudad(info.get('cp'))
+            latlon = str(cpdata['results'][0]['lat']) + ", " + str(cpdata['results'][0]['lon'])
+            pronostico = apiser.clima(latlon)
         else:
             latlon = info.get('lat') + ", " + info.get('lng')
             pronostico = apiser.clima(latlon)
@@ -159,9 +163,9 @@ class ApiController:
             punto = Point(posY, posX)
             esta_dentro = poligono.contains(punto)
             if (esta_dentro):
-                data['puntos'].append({'nombre': f'Ubicacion {etiqueta_nombre}', 'lat': posX, 'lon': posY, 'en_UNSE': 'Si'})
+                data['puntos'].append({'nombre': f'Ubicacion {etiqueta_nombre}', 'categoria': info.get('category'), 'lat': posX, 'lon': posY, 'en_UNSE': 'Si'})
             else:
-                data['puntos'].append({'nombre': f'Ubicacion {etiqueta_nombre}', 'lat': posX, 'lon': posY, 'en_UNSE': 'No'})
+                data['puntos'].append({'nombre': f'Ubicacion {etiqueta_nombre}', 'categoria': info.get('category'), 'lat': posX, 'lon': posY, 'en_UNSE': 'No'})
             etiqueta_nombre += 1
             encontrados += 1
         self.generate_map(lat, lon, radio, data['puntos'])
@@ -300,7 +304,7 @@ class ApiController:
         folium.Circle(location=(lat,lon), radius=radio, color="crimson", fill=True, fill_color="crimson").add_to(mapa)
         folium.Marker(location=(lat, lon), icon=folium.Icon(color='red', prefix='fa', icon='male'), tooltip="Ubicación central").add_to(mapa)
         for place in places:
-            html = "<b>Nombre</b>"+"<br>"+place['nombre']+"<br><br>"
+            html = "<b>Nombre</b>"+"<br>"+place['nombre']+"<br><br>"+"<b>Categoria</b>"+"<br>"+place['categoria']
             iframe = folium.IFrame(html)
             popup = folium.Popup(iframe, min_width=200, max_width=200)
             folium.Marker(location=(place['lat'], place['lon']), popup=popup).add_to(mapa)
