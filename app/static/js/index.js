@@ -176,6 +176,17 @@ class SimularClimaYBuscarPuntos {
         if (document.getElementById('checkTiempo').checked) {
             this.simularContextoTemporal();
         }
+
+        if (!document.getElementById('checkPois').checked && !document.getElementById('checkClima').checked && !document.getElementById('checkTiempo').checked) {
+            console.log('Paso');
+            Swal.fire({
+                title: '¡Atención!',
+                text: 'Para comenzar la simulación debe seleccionar una de las opciones de generación de datos.',
+                icon: 'warning',
+                confirmButtonText: 'Aceptar',
+                confirmButtonColor: '#3085d6'
+            });
+        }
     }
 
     ////////////////////////// --- CONTEXTO TEMPORAL --- //////////////////////////
