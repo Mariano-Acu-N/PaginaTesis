@@ -181,7 +181,7 @@ class SimularClimaYBuscarPuntos {
             console.log('Paso');
             Swal.fire({
                 title: '¡Atención!',
-                text: 'Para comenzar la generación de los datos, debe seleccionar una de las opciones configurables.',
+                text: 'Para comenzar la generación de los datos debe seleccionar una de las opciones configurables.',
                 icon: 'warning',
                 confirmButtonText: 'Aceptar',
                 confirmButtonColor: '#3085d6'
