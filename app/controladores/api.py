@@ -28,10 +28,8 @@ class ApiController:
         i = 0
         #Tiempo libre o disponible
         # menor a 15 min, entre 15 a 30 min, entre 30 a 50 min y mas de 1hr
-        #while i < len(info.get('filas')) - 1:
-        # hrdesde, mdesde = map(int,info.get('hrdesde').split(":"))
-        # hrhasta, mhasta = map(int,info.get('hrhasta').split(":"))
         try:
+            #Hora del día
             hrdesde, mdesde = self.procesar_hora(info.get('hrdesde'))
             hrhasta, mhasta = self.procesar_hora(info.get('hrhasta'))
             total_min_desde = hrdesde * 60 + mdesde
@@ -43,30 +41,12 @@ class ApiController:
         except Exception as e:
             print(f"Error procesando formato de hora: {e}")
         if info.get('b') == 0:
-            #Hora del día
-            # hrdesde, mdesde = map(int,info.get('hrdesde').split(":"))
-            # hrhasta, mhasta = map(int,info.get('hrhasta').split(":"))
-            # total_min_desde = hrdesde * 60 + mdesde
-            # total_min_hasta = hrhasta * 60 + mhasta
-            # total_min_nuevo = self.uniforme(total_min_desde, total_min_hasta)
-            # hrnueva = int((total_min_nuevo // 60) % 24)
-            # minnuevos = int(total_min_nuevo % 60)
-            # data['tiempo'].append({'hr_del_dia': f"{hrnueva}:{minnuevos}", 'unidad_medida_hr_del_dia': '24hr'})
             while i < info.get('cantTLibre'):
                 tiempo_libre = self.laplace() #minutos
                 data['tiempo'].append({'tiempo_libre': tiempo_libre})
                 i+=1
             data['tiempo'].append({'unidad_medida_tiempo_libre': 'minutos'})
         else:
-            #Hora del día
-            #hrdesde, mdesde = map(int,info.get('hrdesde').split(":"))
-            #hrhasta, mhasta = map(int,info.get('hrhasta').split(":"))
-            # total_min_desde = 0 # La hora 00:00
-            # total_min_hasta = 23 * 60 + 59 #La hora 23:59
-            # total_min_nuevo = self.uniforme(total_min_desde, total_min_hasta)
-            # hrnueva = int((total_min_nuevo // 60) % 24)
-            # minnuevos = int(total_min_nuevo % 60)
-            # data['tiempo'].append({'hr_del_dia': f"{hrnueva}:{minnuevos}", 'unidad_medida_hr_del_dia': '24hr'})
             while i < info.get('cantTLibre'):
                 tiempo_libre = self.transInvFunDisc(info.get('p1'),info.get('p2'),info.get('p3')) #minutos
                 data['tiempo'].append({'tiempo_libre': tiempo_libre})
@@ -159,7 +139,7 @@ class ApiController:
             lon = float(info.get('lon'))
         radio = info.get('radio')
         while encontrados < int(info.get('cantPoints')):
-            posX, posY = self.uniformPosGeograficas(lim_inf, lim_sup, lat, lon, radio)
+            posX, posY = self.uniformPosGeogr(lim_inf, lim_sup, lat, lon, radio)
             punto = Point(posY, posX)
             esta_dentro = poligono.contains(punto)
             if (esta_dentro):
@@ -234,7 +214,7 @@ class ApiController:
         valor = lim_inf + (lim_sup - lim_inf) * self.generate_u()
         return valor
     
-    def uniformPosGeograficas(self, lim_inf, lim_sup, lat_centro, lon_centro, radio_metros):
+    def uniformPosGeogr(self, lim_inf, lim_sup, lat_centro, lon_centro, radio_metros):
         # Generamos ángulo y distancia aleatoria
         angulo = self.uniforme(lim_inf, lim_sup)
         distancia = float(radio_metros) * math.sqrt(self.generate_u())
