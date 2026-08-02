@@ -18,7 +18,7 @@ class ApiController:
         self.api_bp.route('/noncheckboxTempHum', methods=['POST'])(self.noncheckboxTempHum)
         self.api_bp.route('/simularContextoGeografico', methods=['POST'])(self.simularContextoGeografico)
         self.api_bp.route('/simularContextoTemporal', methods=['POST'])(self.simularContextoTemporal)
-        self.api_bp.route('/api', methods=['POST'])(self.api)
+        # self.api_bp.route('/api', methods=['POST'])(self.api)
         self.api_bp.route('/apiUbicaciones', methods=['GET'])(self.apiUbicaciones)
 
 ############################# --- CONTEXTO TEMPORAL --- #############################
@@ -110,8 +110,8 @@ class ApiController:
         lim_inf = 0
         lim_sup = 2 * math.pi
         info = request.get_json()
-        print(info)
-        print(info.get('cantPoints'))
+        # print(info)
+        # print(info.get('cantPoints'))
         # (Longitud, Latitud) -> (x, y), el primer y ultimo punto deben ser iguales para cerrar el poligono
         # Coordenas del poligono para abarcar la UNSE
         coords_area = [(-64.25139019422534, -27.802016156660176),
@@ -154,33 +154,33 @@ class ApiController:
 
 ############################# --- SOLAPA API QUE EMULA LO PEDIDO POR LUCIANO DESDE LA INTERFAZ --- #############################
 
-    def api(self):
-        info = request.get_json()
-        i = 0
-        radio_metros = 100
-        puntos = {'Coordenadas': []}
-        mapa = folium.Map(location=(info.get('latitude'), info.get('longitude')), zoom_start=15)
-        folium.Marker(location=(info.get('latitude'), info.get('longitude')), icon=folium.Icon(icon="cloud", color="red"), tooltip="Usted esta aquí").add_to(mapa)
-        while i < info.get('cantCoord'):
-            # Generamos ángulo y distancia aleatoria
-            angulo = 0 + ((2 * math.pi) - 0) * self.generate_u()
-            distancia = float(radio_metros) * math.sqrt(self.generate_u())
-            # Calculamos el desplazamiento en metros
-            off_x = distancia * math.cos(angulo)
-            off_y = distancia * math.sin(angulo)
-            # CONVERSIÓN DE METROS A GRADOS
-            # 1 grado aprox 111.320 metros
-            delta_lat = off_y / 111320
-            # La longitud depende de qué tan lejos estés del ecuador
-            delta_lon = off_x / (111320 * math.cos(math.radians(info.get('latitude'))))
-            # Retornamos la coordenada final sumada al centro
-            latitud = info.get('latitude') + delta_lat
-            longitud = info.get('longitude') + delta_lon
-            puntos['Coordenadas'].append({'Lat': latitud, 'Lon': longitud})
-            folium.Marker(location=(latitud, longitud), tooltip="Ubicaciones aleatorias").add_to(mapa)
-            i+=1
-        mapa.save("app/static/mapa.html")
-        return jsonify(puntos)
+    # def api(self):
+    #     info = request.get_json()
+    #     i = 0
+    #     radio_metros = 100
+    #     puntos = {'Coordenadas': []}
+    #     mapa = folium.Map(location=(info.get('latitude'), info.get('longitude')), zoom_start=15)
+    #     folium.Marker(location=(info.get('latitude'), info.get('longitude')), icon=folium.Icon(icon="cloud", color="red"), tooltip="Usted esta aquí").add_to(mapa)
+    #     while i < info.get('cantCoord'):
+    #         # Generamos ángulo y distancia aleatoria
+    #         angulo = 0 + ((2 * math.pi) - 0) * self.generate_u()
+    #         distancia = float(radio_metros) * math.sqrt(self.generate_u())
+    #         # Calculamos el desplazamiento en metros
+    #         off_x = distancia * math.cos(angulo)
+    #         off_y = distancia * math.sin(angulo)
+    #         # CONVERSIÓN DE METROS A GRADOS
+    #         # 1 grado aprox 111.320 metros
+    #         delta_lat = off_y / 111320
+    #         # La longitud depende de qué tan lejos estés del ecuador
+    #         delta_lon = off_x / (111320 * math.cos(math.radians(info.get('latitude'))))
+    #         # Retornamos la coordenada final sumada al centro
+    #         latitud = info.get('latitude') + delta_lat
+    #         longitud = info.get('longitude') + delta_lon
+    #         puntos['Coordenadas'].append({'Lat': latitud, 'Lon': longitud})
+    #         folium.Marker(location=(latitud, longitud), tooltip="Ubicaciones aleatorias").add_to(mapa)
+    #         i+=1
+    #     mapa.save("app/static/mapa.html")
+    #     return jsonify(puntos)
 
 ############################# --- API LUCIANO QUE FUNCIONA CONSULTANDO URL POR INTERNET --- #############################
     def apiUbicaciones(self):

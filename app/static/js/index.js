@@ -108,7 +108,6 @@ class SimularClimaPuntosYHoras {
     }
 
     // --- LÓGICA DE SIMULACIÓN ---
-
     manejarSubmit(event) {
         event.preventDefault();
 
@@ -164,6 +163,7 @@ class SimularClimaPuntosYHoras {
 
     ////////////////////////// --- CONTEXTO TEMPORAL --- //////////////////////////
     simularContextoTemporal() {
+        // inicio = performance.now();
         const hrMin = document.getElementById("hrMin").value;
         const hrMax = document.getElementById("hrMax").value;
         const cantTLibre = parseInt(document.getElementById("cantTLibre").value);
@@ -173,8 +173,6 @@ class SimularClimaPuntosYHoras {
         const p4 = parseFloat(document.getElementById("prob4").value) / 100;
         //const checkTL = document.getElementById('checkTL').checked;
         const esLaplace = document.getElementById('radioLaplace').checked;
-        console.log(hrMin);
-        console.log(hrMax);
         if (this.validarHora(hrMin)) {
             if (this.validarHora(hrMax)) {
                 if (!Number.isNaN(cantTLibre)) {
@@ -297,10 +295,13 @@ class SimularClimaPuntosYHoras {
                 cuerpoTLibre.innerHTML += fila;
             }
         });
+        //const fin = performance.now();
+        //console.log(`Tiempo: ${fin - inicio} ms`);
     }
 
     ////////////////////////// --- CONTEXTO GEOGRAFICO --- //////////////////////////
     simularContextoGeografico(city, cp, lat, lon) {
+
         const category = document.getElementById("categories").value;
         const radio = document.getElementById("radio").value;
         //const cantPoints = parseInt(document.getElementById("cantPoints").value);
@@ -367,6 +368,9 @@ class SimularClimaPuntosYHoras {
     ////////////////////////// --- CONTEXTO AMBIENTAL --- //////////////////////////
 
     simularContextoAmbiental(city, cp, lat, lng) {
+
+        //inicio = performance.now();
+
         // 1. Verificamos cuál método está seleccionado (API o Manual)
         const esAPI = document.getElementById("radioClimaAPI").checked;
 
@@ -404,18 +408,24 @@ class SimularClimaPuntosYHoras {
     }
 
     checkboxTempHum(tempmin, tempmax, humDeseada, humFluctuacion) {
+        // const inicio = performance.now();
         const info = { tempmin, tempmax, humDeseada, humFluctuacion };
         this.postJSON('/checkboxTempHum', info, (data) => {
             this.dataGlobal.clima = data;
             this.agregarTempHumTabla(data);
         });
+        //const fin = performance.now();
+        //console.log(`Tiempo: ${fin - inicio} ms`);
     }
 
     noncheckboxTempHum(city, cp, lat, lng) {
+        // const inicio = performance.now();
         this.postJSON('/noncheckboxTempHum', { city, cp, lat, lng }, (data) => {
             this.dataGlobal.clima = data;
             this.agregarTempHumTabla(data);
         });
+        //const fin = performance.now();
+        //console.log(`Tiempo: ${fin - inicio} ms`);
     }
 
     validarDatosTempHum(tempmin, tempmax, humDeseada, humFluctuacion) {
@@ -499,11 +509,18 @@ class SimularClimaPuntosYHoras {
         a.href = url;
         a.download = 'escenario_sintetico.json';
         a.click();
+        try {
+            JSON.parse(JSON.stringify(this.dataGlobal));
+            console.log("JSON válido");
+        } catch (error) {
+            console.log("JSON inválido");
+        }
     }
 }
 
 // Inicialización global
 let simulador;
+//let inicio;
 document.addEventListener('DOMContentLoaded', () => {
     simulador = new SimularClimaPuntosYHoras('simuladorForm', 'savebtn');
 });
