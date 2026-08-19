@@ -4,26 +4,35 @@ from app.config import Config
 import folium
 import math
 from shapely.geometry import Point, Polygon
-
+from datetime import datetime
 
 class ApiController:
     def __init__(self):
         self.api_bp = Blueprint('api', __name__)
-        self.register_routes()
         self.b = 0
         self.seed = 0
+        self.id_Simulacion = 0
+        self.primera_sim = True
+        self.register_routes()
 
     def register_routes(self):
-        self.api_bp.route('/checkboxTempHum', methods=['POST'])(self.checkboxTempHum)
-        self.api_bp.route('/noncheckboxTempHum', methods=['POST'])(self.noncheckboxTempHum)
+        self.api_bp.route('/reiniciarSimulacion', methods=['POST'])(self.reiniciarSimulacion)
+        self.api_bp.route('/datosManuales', methods=['POST'])(self.datosManuales)
+        self.api_bp.route('/datosRealesAPI', methods=['POST'])(self.datosRealesAPI)
         self.api_bp.route('/simularContextoGeografico', methods=['POST'])(self.simularContextoGeografico)
         self.api_bp.route('/simularContextoTemporal', methods=['POST'])(self.simularContextoTemporal)
         # self.api_bp.route('/api', methods=['POST'])(self.api)
         self.api_bp.route('/apiUbicaciones', methods=['GET'])(self.apiUbicaciones)
 
+
+    # Para reiniciar la variable primera_sim, sino queda en False porque el frontend usa la misma instancia del backend para todas las ejecuciones
+    def reiniciarSimulacion(self):
+        self.primera_sim = True
+        return jsonify({'status': 'ok', 'mensaje': 'Flag de simulación reiniciado'}), 200
+
 ############################# --- CONTEXTO TEMPORAL --- #############################
     def simularContextoTemporal(self):
-        data = {'tiempo': []}
+        data = {'id_Simulacion': self.id_Simulacion, 'fechaHora_Generacion': datetime.now(), 'tiempo': []}
         info = request.get_json()
         i = 0
         #Tiempo libre o disponible
@@ -37,6 +46,10 @@ class ApiController:
             total_min_nuevo = self.uniforme(total_min_desde, total_min_hasta)
             hrnueva = int((total_min_nuevo // 60) % 24)
             minnuevos = int(total_min_nuevo % 60)
+            if (self.primera_sim):
+                self.id_Simulacion += 1
+                data['id_Simulacion'] = self.id_Simulacion
+                self.primera_sim = False
             data['tiempo'].append({'hr_del_dia': f"{hrnueva}:{minnuevos}", 'unidad_medida_hr_del_dia': '24hr'})
         except Exception as e:
             print(f"Error procesando formato de hora: {e}")
@@ -52,7 +65,8 @@ class ApiController:
                 data['tiempo'].append({'tiempo_libre': tiempo_libre})
                 i+=1
             data['tiempo'].append({'unidad_medida_tiempo_libre': 'minutos'})
-        return jsonify(data['tiempo'])
+        return jsonify(data)
+        #return jsonify(data['tiempo'])
 
     def procesar_hora(self, hora_str):
     # Verificamos si la cadena contiene los dos puntos
@@ -67,7 +81,8 @@ class ApiController:
 
 ############################# --- CONTEXTO AMBIENTAL --- #############################
 
-    def checkboxTempHum(self):
+    def datosManuales(self):
+        data = {'id_Simulacion': self.id_Simulacion, 'fechaHora_Generacion': datetime.now(), 'clima': []}
         info = request.get_json()
         temp = self.uniforme(info.get('tempmin'), info.get('tempmax'))
         hum = self.normal(info.get('humDeseada'), info.get('humFluctuacion')) # No aplico la multiplicacion por 0.1 porque ya debería conocer la desviación estandar, diferente el caso de que cuando la obtengo de la API
@@ -75,10 +90,22 @@ class ApiController:
             hum = 100
         elif hum < 0:
             hum = 0
-        data = [{'temp': int(temp), 'unidad_medida_temp': 'grados', 'hum': int(hum), 'unidad_medida_hum': 'porcentaje'}]
+        if (self.primera_sim):
+            self.id_Simulacion += 1
+            # round(temp, 1) para que tome 1 decimal, el dato ya es del tipo float
+            data['clima'].append({'temp': round(temp, 1), 'unidad_medida_temp': 'grados', 'hum': int(hum), 'unidad_medida_hum': 'porcentaje'})
+            # data = [{'id_Simulacion': self.id_Simulacion, 'fechaHora_Generacion': datetime.now(), 'temp': round(temp, 1), 'unidad_medida_temp': 'grados', 'hum': int(hum), 'unidad_medida_hum': 'porcentaje'}]
+            self.primera_sim = False
+        else:
+            # round(temp, 1) para que tome 1 decimal, el dato ya es del tipo float
+            data['clima'].append({'temp': round(temp, 1), 'unidad_medida_temp': 'grados', 'hum': int(hum), 'unidad_medida_hum': 'porcentaje'})
+            #data = [{'id_Simulacion': self.id_Simulacion, 'fechaHora_Generacion': datetime.now(), 'temp': round(temp, 1), 'unidad_medida_temp': 'grados', 'hum': int(hum), 'unidad_medida_hum': 'porcentaje'}]
+        # round(temp, 1) para que tome 1 decimal, el dato ya es del tipo float
+        # data = [{'id_Simulacion': self.id_Simulacion, 'fechaHora_Generacion': datetime.now(), 'temp': round(temp, 1), 'unidad_medida_temp': 'grados', 'hum': int(hum), 'unidad_medida_hum': 'porcentaje'}]
         return jsonify(data)
 
-    def noncheckboxTempHum(self):
+    def datosRealesAPI(self):
+        data = {'id_Simulacion': self.id_Simulacion, 'fechaHora_Generacion': datetime.now(), 'clima': []}
         apiser = ApiService(Config.api_base_url_combo_city, Config.api_key, Config.api_type,
                             Config.api_base_url_weather, Config.api_key_weather, Config.api_type_weather)
         info = request.get_json()
@@ -98,20 +125,28 @@ class ApiController:
             hum = 100
         elif hum < 0:
             hum = 0
-        data = [{'temp': int(temp), 'unidad_medida_temp': 'grados', 'hum': int(hum), 'unidad_medida_hum': 'porcentaje'}]
+        if (self.primera_sim):
+            self.id_Simulacion += 1
+            # round(temp, 1) para que tome 1 decimal, el dato ya es del tipo float
+            data['clima'].append({'temp': round(temp, 1), 'unidad_medida_temp': 'grados', 'hum': int(hum), 'unidad_medida_hum': 'porcentaje'})
+            #data = [{'id_Simulacion': self.id_Simulacion, 'fechaHora_Generacion': datetime.now(), 'temp': round(temp, 1), 'unidad_medida_temp': 'grados', 'hum': int(hum), 'unidad_medida_hum': 'porcentaje'}]
+            self.primera_sim = False
+        else:
+            # round(temp, 1) para que tome 1 decimal, el dato ya es del tipo float
+            data['clima'].append({'temp': round(temp, 1), 'unidad_medida_temp': 'grados', 'hum': int(hum), 'unidad_medida_hum': 'porcentaje'})
+            #data = [{'id_Simulacion': self.id_Simulacion, 'fechaHora_Generacion': datetime.now(), 'temp': round(temp, 1), 'unidad_medida_temp': 'grados', 'hum': int(hum), 'unidad_medida_hum': 'porcentaje'}]
+        # round(temp, 1) para que tome 1 decimal, el dato ya es del tipo float
+        # data = [{'id_Simulacion': self.id_Simulacion, 'fechaHora_Generacion': datetime.now(), 'temp': round(temp, 1), 'unidad_medida_temp': 'grados', 'hum': int(hum), 'unidad_medida_hum': 'porcentaje'}]
         return jsonify(data)    
 
 ############################# --- CONTEXTO GEOGRAFICO --- #############################
 
     def simularContextoGeografico(self):
-        data = {'puntos': []}
+        data = {'id_Simulacion': self.id_Simulacion, 'fechaHora_Generacion': datetime.now().isoformat(), 'puntosGeograficos': []}
         etiqueta_nombre = 1
         encontrados = 0
         lim_inf = 0
         lim_sup = 2 * math.pi
-        info = request.get_json()
-        # print(info)
-        # print(info.get('cantPoints'))
         # (Longitud, Latitud) -> (x, y), el primer y ultimo punto deben ser iguales para cerrar el poligono
         # Coordenas del poligono para abarcar la UNSE
         coords_area = [(-64.25139019422534, -27.802016156660176),
@@ -124,6 +159,11 @@ class ApiController:
                    (-64.25169596605048, -27.801462156179742),
                    (-64.25139019422534, -27.802016156660176)]
         poligono = Polygon(coords_area)
+        info = request.get_json()
+        if (self.primera_sim):
+            self.id_Simulacion += 1
+            data['id_Simulacion'] = self.id_Simulacion
+            self.primera_sim = False
         apiser = ApiService(Config.api_base_url_combo_city, Config.api_key, Config.api_type,
                             Config.api_base_url_weather, Config.api_key_weather, Config.api_type_weather)
         if (info.get('city')):            
@@ -143,14 +183,15 @@ class ApiController:
             punto = Point(posY, posX)
             esta_dentro = poligono.contains(punto)
             if (esta_dentro):
-                data['puntos'].append({'nombre': f'Ubicacion {etiqueta_nombre}', 'categoria': info.get('category'), 'lat': posX, 'lon': posY, 'en_UNSE': 'Si'})
+                data['puntosGeograficos'].append({'nombre': f'Ubicacion {etiqueta_nombre}', 'categoria': info.get('category'), 'lat': posX, 'lon': posY, 'en_UNSE': 'Si'})
             else:
-                data['puntos'].append({'nombre': f'Ubicacion {etiqueta_nombre}', 'categoria': info.get('category'), 'lat': posX, 'lon': posY, 'en_UNSE': 'No'})
+                data['puntosGeograficos'].append({'nombre': f'Ubicacion {etiqueta_nombre}', 'categoria': info.get('category'), 'lat': posX, 'lon': posY, 'en_UNSE': 'No'})
             etiqueta_nombre += 1
             encontrados += 1
-        self.generate_map(lat, lon, radio, data['puntos'])
-        data['puntos'].append({'unidad_medida_coordendas': 'grados'})
-        return jsonify(data['puntos'])
+        self.generate_map(lat, lon, radio, data['puntosGeograficos'])
+        data['puntosGeograficos'].append({'unidad_medida_coordenadas_lat_lon': 'grados'})
+        return jsonify(data)
+        # return jsonify(data['puntos'])
 
 ############################# --- SOLAPA API QUE EMULA LO PEDIDO POR LUCIANO DESDE LA INTERFAZ --- #############################
 
@@ -290,3 +331,8 @@ class ApiController:
             folium.Marker(location=(place['lat'], place['lon']), popup=popup).add_to(mapa)
         mapa.save("app/static/mapa.html")
 
+############################# --- EXPORTAR ---  #############################
+
+    def exportarJSON(self, data):
+
+        return jsonify(data)

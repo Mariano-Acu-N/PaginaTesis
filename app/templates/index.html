@@ -94,10 +94,10 @@
                                 </div>
                                 <div class="tab-pane fade" id="panel-coord" role="tabpanel">
                                     <div class="row g-2">
-                                        <div class="col-6"><input type="text" class="form-control" id="input-lat"
-                                                placeholder="Latitud" disabled></div>
-                                        <div class="col-6"><input type="text" class="form-control" id="input-lng"
-                                                placeholder="Longitud" disabled></div>
+                                        <div class="col-6"><input class="form-control" id="input-lat"
+                                                placeholder="Latitud" type="number" step="any" disabled></div>
+                                        <div class="col-6"><input class="form-control" id="input-lng"
+                                                placeholder="Longitud" type="number" step="any" disabled></div>
                                     </div>
                                 </div>
                                 <div class="tab-pane fade" id="panel-cp" role="tabpanel">
@@ -122,9 +122,9 @@
                         <div class="card-body section-content" id="content-pois">
                             <div class="row g-2">
                                 <div class="col-6"><input type="number" class="form-control" id="radio"
-                                        placeholder="Radio (metros)" disabled></div>
+                                        placeholder="Radio (metros)" type="number" min="1" disabled></div>
                                 <div class="col-6"><input type="number" class="form-control" id="cantPoints"
-                                        placeholder="Cantidad a generar" disabled></div>
+                                        placeholder="Cantidad a generar" type="number" min="1" disabled></div>
                                 <div class="col-12">
                                     <select class="form-select" id="categories" disabled>
                                         <option value="">Categoría...</option>
@@ -165,15 +165,15 @@
                             <div id="grupo-clima-inputs">
                                 <div class="row g-2 mb-2">
                                     <div class="col-6"><input type="number" class="form-control" id="tempMin"
-                                            placeholder="Temp. Min" disabled></div>
+                                            placeholder="Temp. Min" step="any" disabled></div>
                                     <div class="col-6"><input type="number" class="form-control" id="tempMax"
-                                            placeholder="Temp. Max" disabled></div>
+                                            placeholder="Temp. Max" step="any" disabled></div>
                                 </div>
                                 <div class="row g-2">
                                     <div class="col-6"><input type="number" class="form-control" id="humDes"
-                                            placeholder="Hum. Base" disabled></div>
+                                            placeholder="Hum. Base" min="0" disabled></div>
                                     <div class="col-6"><input type="number" class="form-control" id="humFluc"
-                                            placeholder="Variacion" disabled></div>
+                                            placeholder="Variacion" min="0" disabled></div>
                                 </div>
                             </div>
                         </div>

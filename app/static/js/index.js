@@ -1,6 +1,6 @@
 class SimularClimaPuntosYHoras {
     constructor(formId, saveBtnId) {
-        this.dataGlobal = { puntos: null, clima: null, tiempo: null };
+        this.dataGlobal = {id_Simulacion: null, fechaHora_Simulacion:null, ubicacion: null, clima: null, tiempo: null };
         this.form = document.getElementById(formId);
         this.saveBtn = document.getElementById(saveBtnId);
 
@@ -108,7 +108,7 @@ class SimularClimaPuntosYHoras {
     }
 
     // --- LÓGICA DE SIMULACIÓN ---
-    manejarSubmit(event) {
+    async manejarSubmit(event) {
         event.preventDefault();
 
         // 1. Declaramos las variables vacías
@@ -116,7 +116,10 @@ class SimularClimaPuntosYHoras {
         let lat = null;
         let lng = null;
         let cp = null;
-
+        
+        // Endpoint explícito para reiniciar la variable primera_sim en el backend antes de ejecutar la simulación
+        await fetch('/reiniciarSimulacion', { method: 'POST' });
+        
         // 2. Capturamos DATOS ÚNICAMENTE de la solapa activa
         // Esto evita que si hay algo escrito en "Coordenadas" pero estás en "Ciudad", se mezcle.
         if (this.metodoUbicacionActual === 'ciudad') {
@@ -128,6 +131,15 @@ class SimularClimaPuntosYHoras {
         }
         else if (this.metodoUbicacionActual === 'cp') {
             cp = document.getElementById('input-cp').value;
+            if (!this.validarFormatoCodigoPostal(cp)) {
+                Swal.fire({
+                title: '¡Atención!',
+                text: 'Formato inválido del Código Postal (ejemplo de formato válido 4200, Argentina)',
+                icon: 'warning',
+                confirmButtonText: 'Aceptar',
+                confirmButtonColor: '#3085d6'
+            });
+            }
         }
 
         // 3. Ejecución condicional (Solo si el switch está ON y no hay datos previos)
@@ -137,20 +149,17 @@ class SimularClimaPuntosYHoras {
         if (document.getElementById('checkPois').checked) {
             this.simularContextoGeografico(city, cp, lat, lng);
         }
-
         // --- SIMULACIÓN AMBIENTAL ---
         if (document.getElementById('checkClima').checked) {
-            // Pasamos los datos de ubicación por si el clima depende de la zona
+        // Pasamos los datos de ubicación por si el clima depende de la zona
             this.simularContextoAmbiental(city, cp, lat, lng);
         }
-
         // --- SIMULACIÓN TEMPORAL ---
         if (document.getElementById('checkTiempo').checked) {
             this.simularContextoTemporal();
         }
 
         if (!document.getElementById('checkPois').checked && !document.getElementById('checkClima').checked && !document.getElementById('checkTiempo').checked) {
-            console.log('Paso');
             Swal.fire({
                 title: '¡Atención!',
                 text: 'Para comenzar la generación de los datos debe seleccionar una de las opciones configurables.',
@@ -175,9 +184,20 @@ class SimularClimaPuntosYHoras {
         const esLaplace = document.getElementById('radioLaplace').checked;
         if (this.validarHora(hrMin)) {
             if (this.validarHora(hrMax)) {
-                if (!Number.isNaN(cantTLibre)) {
+                if(this.horaAMinutos(hrMin) <= this.horaAMinutos(hrMax)) {
                     esLaplace ? this.generarHr_Tiempos(hrMin, hrMax, cantTLibre, p1, p2, p3, p4, 0) : this.validarProbTransInvDisc(hrMin, hrMax, cantTLibre, p1, p2, p3, p4, 1)
                 } else {
+                    Swal.fire({
+                        title: '¡Atención!',
+                        text: 'La hora máxima debe ser mayor que hora mínima',
+                        icon: 'warning',
+                        confirmButtonText: 'Aceptar',
+                        confirmButtonColor: '#3085d6'
+                    });
+                }
+                //if (!Number.isNaN(cantTLibre)) {
+                    //esLaplace ? this.generarHr_Tiempos(hrMin, hrMax, cantTLibre, p1, p2, p3, p4, 0) : this.validarProbTransInvDisc(hrMin, hrMax, cantTLibre, p1, p2, p3, p4, 1)
+                /*} else {
                     Swal.fire({
                         title: '¡Atención!',
                         text: 'Defina la cantidad de datos/puntos a generar para continuar.',
@@ -185,7 +205,7 @@ class SimularClimaPuntosYHoras {
                         confirmButtonText: 'Aceptar',
                         confirmButtonColor: '#3085d6'
                     });
-                }
+                }*/
             } else {
                 Swal.fire({
                     title: '¡Atención!',
@@ -212,6 +232,17 @@ class SimularClimaPuntosYHoras {
         return regex.test(horaTexto);
     }
 
+    horaAMinutos(entrada) {
+        // Si ya es un número o un texto sin ":", asumimos que son solo horas
+        if (!String(entrada).includes(':')) {
+            return Number(entrada) * 60;
+        }
+        
+        // Si tiene ":", separamos horas y minutos
+        const [horas, minutos] = entrada.split(':').map(Number);
+        return (horas * 60) + minutos;
+    }
+
     validarProbTransInvDisc(hrdesde, hrhasta, cantTLibre, p1, p2, p3, p4, b) {
         let totalProb = 0;
         if (!Number.isNaN(p1)) {
@@ -219,12 +250,12 @@ class SimularClimaPuntosYHoras {
                 if (!Number.isNaN(p3)) {
                     if (!Number.isNaN(p4)) {
                         totalProb = p1 + p2 + p3 + p4;
-                        if (totalProb <= 1) {
+                        if (totalProb === 1) {
                             this.generarHr_Tiempos(hrdesde, hrhasta, cantTLibre, p1, p2, p3, p4, 1);
                         } else {
                             Swal.fire({
                                 title: '¡Atención!',
-                                text: 'La suma de las probabilidades debe ser menor o igual a 100%',
+                                text: 'La suma de las probabilidades debe ser igual a 100%',
                                 icon: 'warning',
                                 confirmButtonText: 'Aceptar',
                                 confirmButtonColor: '#3085d6'
@@ -271,8 +302,10 @@ class SimularClimaPuntosYHoras {
     generarHr_Tiempos(hrdesde, hrhasta, cantTLibre, p1, p2, p3, p4, b) {
         const info = { hrdesde, hrhasta, cantTLibre, p1, p2, p3, p4, b };
         this.postJSON('/simularContextoTemporal', info, (data) => {
-            this.dataGlobal.tiempo = data;
-            this.agregarTiempoLibreATablaCoord(data)
+            this.dataGlobal.id_Simulacion = data.id_Simulacion;
+            this.dataGlobal.fechaHora_Simulacion = data.fechaHora_Generacion;
+            this.dataGlobal.tiempo = data.tiempo;
+            this.agregarTiempoLibreATablaCoord(data.tiempo)
         });
     };
 
@@ -295,8 +328,6 @@ class SimularClimaPuntosYHoras {
                 cuerpoTLibre.innerHTML += fila;
             }
         });
-        //const fin = performance.now();
-        //console.log(`Tiempo: ${fin - inicio} ms`);
     }
 
     ////////////////////////// --- CONTEXTO GEOGRAFICO --- //////////////////////////
@@ -311,8 +342,10 @@ class SimularClimaPuntosYHoras {
                 if (category.trim() !== "") {
                     const info = { city, cp, lat, lon, category, radio, cantPoints };
                     this.postJSON('/simularContextoGeografico', info, (data) => {
-                        this.dataGlobal.puntos = data;
-                        this.renderizarResultados(data);
+                        this.dataGlobal.id_Simulacion = data.id_Simulacion;
+                        this.dataGlobal.fechaHora_Simulacion = data.fechaHora_Generacion;
+                        this.dataGlobal.ubicacion = data.puntosGeograficos;
+                        this.renderizarResultados(data.puntosGeograficos);
                     });
                 } else {
                     Swal.fire({
@@ -327,7 +360,7 @@ class SimularClimaPuntosYHoras {
             } else {
                 Swal.fire({
                     title: '¡Atención!',
-                    text: 'Defina la cantidad de datos/puntos a generar para continuar.',
+                    text: 'Debe ingresar la cantidad de datos/puntos a generar para continuar.',
                     icon: 'warning',
                     confirmButtonText: 'Aceptar',
                     confirmButtonColor: '#3085d6'
@@ -343,6 +376,14 @@ class SimularClimaPuntosYHoras {
             });
 
         }
+    }
+
+    validarFormatoCodigoPostal(texto) {
+        // Patrón: Código alfanumérico (3-10 caracteres), coma, espacio opcional, y nombre de país
+        const patron = /^[A-Za-z0-9\-\s]{3,10},\s*[A-Za-zÀ-ÿ\s'\-]+$/;
+    
+        // .trim() limpia espacios sobrantes al inicio y al final
+        return patron.test(texto.trim());
     }
 
     renderizarResultados(data) {
@@ -369,8 +410,6 @@ class SimularClimaPuntosYHoras {
 
     simularContextoAmbiental(city, cp, lat, lng) {
 
-        //inicio = performance.now();
-
         // 1. Verificamos cuál método está seleccionado (API o Manual)
         const esAPI = document.getElementById("radioClimaAPI").checked;
 
@@ -387,16 +426,35 @@ class SimularClimaPuntosYHoras {
             const esLatValida = isFinite(lat) && Math.abs(lat) <= 90;
             const esLonValida = isFinite(lng) && Math.abs(lng) <= 180;
 
-            if (!esLatValida || !esLonValida) {
-                alert("Las coordenadas ingresadas no son válidas.");
-                return;
+            if (!esLatValida) {
+                Swal.fire({
+                title: '¡Atención!',
+                text: 'Coordenada de latitud inválida',
+                icon: 'warning',
+                confirmButtonText: 'Aceptar',
+                confirmButtonColor: '#3085d6'
+            });
+            return; // Cortamos la ejecución si no hay ubicación
             }
+            else if (!esLonValida) {
+                Swal.fire({
+                title: '¡Atención!',
+                text: 'Coordenada de longitud inválida',
+                icon: 'warning',
+                confirmButtonText: 'Aceptar',
+                confirmButtonColor: '#3085d6'
+            });
+            return; // Cortamos la ejecución si no hay ubicación
+            }
+                //alert("Las coordenadas ingresadas no son válidas.");
+                //return;
+            //}
         }
 
         // 4. Lógica de Disparo
         if (esAPI) {
             // Si es API, llamamos a tu función que busca datos reales (OpenWeather, etc.)
-            this.noncheckboxTempHum(city, cp, lat, lng);
+            this.datosRealesAPI(city, cp, lat, lng);
         } else {
             // Si es Manual, llamamos a la función que captura tus inputs (T. Min, T. Max, etc.)
             const tempmin = parseFloat(document.getElementById("tempMin").value)
@@ -407,34 +465,23 @@ class SimularClimaPuntosYHoras {
         }
     }
 
-    checkboxTempHum(tempmin, tempmax, humDeseada, humFluctuacion) {
-        // const inicio = performance.now();
-        const info = { tempmin, tempmax, humDeseada, humFluctuacion };
-        this.postJSON('/checkboxTempHum', info, (data) => {
-            this.dataGlobal.clima = data;
-            this.agregarTempHumTabla(data);
-        });
-        //const fin = performance.now();
-        //console.log(`Tiempo: ${fin - inicio} ms`);
-    }
-
-    noncheckboxTempHum(city, cp, lat, lng) {
-        // const inicio = performance.now();
-        this.postJSON('/noncheckboxTempHum', { city, cp, lat, lng }, (data) => {
-            this.dataGlobal.clima = data;
-            this.agregarTempHumTabla(data);
-        });
-        //const fin = performance.now();
-        //console.log(`Tiempo: ${fin - inicio} ms`);
-    }
-
     validarDatosTempHum(tempmin, tempmax, humDeseada, humFluctuacion) {
-        if (!Number.isNaN(tempmin)) {
+        /*if (!Number.isNaN(tempmin)) {
             if (!Number.isNaN(tempmax)) {
                 if (!Number.isNaN(humDeseada)) {
-                    if (!Number.isNaN(humFluctuacion)) {
-                        this.checkboxTempHum(tempmin, tempmax, humDeseada, humFluctuacion);
+                    if (!Number.isNaN(humFluctuacion)) {*/
+                    if (tempmax > tempmin) {
+                        this.datosManuales(tempmin, tempmax, humDeseada, humFluctuacion);
                     } else {
+                        Swal.fire({
+                            title: '¡Atención!',
+                            text: 'La temperatura máxima debe ser mayor que la mínima',
+                            icon: 'warning',
+                            confirmButtonText: 'Aceptar',
+                            confirmButtonColor: '#3085d6'
+                        });
+                    }
+                    /*} else {
                         Swal.fire({
                             title: '¡Atención!',
                             text: 'Debe ingresar un valor de Variación de la humedad',
@@ -469,15 +516,35 @@ class SimularClimaPuntosYHoras {
                 confirmButtonText: 'Aceptar',
                 confirmButtonColor: '#3085d6'
             });
-        }
+        }*/
+    }
+
+    datosManuales(tempmin, tempmax, humDeseada, humFluctuacion) {
+        // const inicio = performance.now();
+        const info = { tempmin, tempmax, humDeseada, humFluctuacion};
+        this.postJSON('/datosManuales', info, (data) => {
+            this.dataGlobal.id_Simulacion = data.id_Simulacion;
+            this.dataGlobal.fechaHora_Simulacion = data.fechaHora_Generacion;
+            this.dataGlobal.clima = data.clima;
+            this.agregarTempHumTabla(data.clima);
+        });
+    }
+
+    datosRealesAPI(city, cp, lat, lng) {
+        this.postJSON('/datosRealesAPI', { city, cp, lat, lng}, (data) => {
+            this.dataGlobal.id_Simulacion = data.id_Simulacion;
+            this.dataGlobal.fechaHora_Simulacion = data.fechaHora_Generacion;
+            this.dataGlobal.clima = data.clima;
+            this.agregarTempHumTabla(data.clima);
+        });
     }
 
     agregarTempHumTabla(data) {
         const cuerpo = document.getElementById("tbodyAmb");
         cuerpo.innerHTML = "";
-
+        // data[0].temp así para que muestre el decimal de la temperatura, el dato ya viene como float
         const fila = `<tr>
-                    <td>${parseInt(data[0].temp)}ºC</td>
+                    <td>${(data[0].temp)}ºC</td>
                     <td>${parseInt(data[0].hum)} %</td>
                 </tr>`;
         cuerpo.innerHTML += fila;
