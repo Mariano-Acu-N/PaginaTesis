@@ -202,17 +202,18 @@
                                         datos)</label>
                                 </div>
                             </div>
-                            <label class="form-label-custom">Configuración General de la Hora (Formato 24HS)</label>
+                            <label class="form-label-custom">Cantidad de datos a generar</label>
+                            <div class="input-group mb-3">
+                                <!--<span class="input-group-text">Mostrar</span>-->
+                                <input type="number" id="cantTLibre" class="form-control"
+                                    placeholder="Cantidad a generar" min="1">
+                            </div>
+                            <label class="form-label-custom">Configuración de la Hora (Formato 24HS)</label>
                             <div class="row g-2 mb-3">
                                 <div class="col-6"><input type="text" class="form-control" id="hrMin"
                                         placeholder="Inicio (HH:MM) / (HH)"></div>
                                 <div class="col-6"><input type="text" class="form-control" id="hrMax"
                                         placeholder="Fin (HH:MM) / (HH)"></div>
-                            </div>
-                            <div class="input-group mb-3">
-                                <span class="input-group-text">Mostrar</span>
-                                <input type="number" id="cantTLibre" class="form-control"
-                                    placeholder="Total de intervalos" min="1">
                             </div>
                             <div id="grupo-probabilidades">
                                 <label class="form-label-custom">Probabilidades de Tiempo Libre (sumando las 4 debe dar

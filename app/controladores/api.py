@@ -38,35 +38,42 @@ class ApiController:
         #Tiempo libre o disponible
         # menor a 15 min, entre 15 a 30 min, entre 30 a 50 min y mas de 1hr
         try:
-            #Hora del día
-            hrdesde, mdesde = self.procesar_hora(info.get('hrdesde'))
-            hrhasta, mhasta = self.procesar_hora(info.get('hrhasta'))
-            total_min_desde = hrdesde * 60 + mdesde
-            total_min_hasta = hrhasta * 60 + mhasta
-            total_min_nuevo = self.uniforme(total_min_desde, total_min_hasta)
-            hrnueva = int((total_min_nuevo // 60) % 24)
-            minnuevos = int(total_min_nuevo % 60)
             if (self.primera_sim):
                 self.id_Simulacion += 1
                 data['id_Simulacion'] = self.id_Simulacion
                 self.primera_sim = False
-            data['tiempo'].append({'hr_del_dia': f"{hrnueva}:{minnuevos}", 'unidad_medida_hr_del_dia': '24hr'})
         except Exception as e:
             print(f"Error procesando formato de hora: {e}")
         if info.get('b') == 0:
             while i < info.get('cantTLibre'):
+                hrnueva, minnuevos = self.generar_hora(info)
                 tiempo_libre = self.laplace() #minutos
-                data['tiempo'].append({'tiempo_libre': tiempo_libre})
+                data['tiempo'].append({'tiempo_libre': tiempo_libre, 'hr_del_dia': f"{hrnueva}:{minnuevos}"})
                 i+=1
-            data['tiempo'].append({'unidad_medida_tiempo_libre': 'minutos'})
+            data['tiempo'].append({'unidad_medida_tiempo_libre': 'minutos', 'unidad_medida_hr_del_dia': '24hr'})
         else:
             while i < info.get('cantTLibre'):
+                hrnueva, minnuevos = self.generar_hora(info)
                 tiempo_libre = self.transInvFunDisc(info.get('p1'),info.get('p2'),info.get('p3')) #minutos
-                data['tiempo'].append({'tiempo_libre': tiempo_libre})
+                data['tiempo'].append({'tiempo_libre': tiempo_libre, 'hr_del_dia': f"{hrnueva}:{minnuevos}"})
                 i+=1
             data['tiempo'].append({'unidad_medida_tiempo_libre': 'minutos'})
         return jsonify(data)
         #return jsonify(data['tiempo'])
+
+    def generar_hora(self, info):
+        #Hora del día
+        hrdesde, mdesde = self.procesar_hora(info.get('hrdesde'))
+        hrhasta, mhasta = self.procesar_hora(info.get('hrhasta'))
+        total_min_desde = hrdesde * 60 + mdesde
+        total_min_hasta = hrhasta * 60 + mhasta
+        total_min_nuevo = self.uniforme(total_min_desde, total_min_hasta)
+        hrnueva = int((total_min_nuevo // 60) % 24)
+        minnuevos = int(total_min_nuevo % 60)
+        if minnuevos >=0 and minnuevos <=9: # Para agregar un cero a la derecha cuando devuelve los minutos en un solo digito
+            minnuevos = int(str(f"{minnuevos}0"))
+        print(hrnueva, minnuevos)
+        return hrnueva, minnuevos
 
     def procesar_hora(self, hora_str):
     # Verificamos si la cadena contiene los dos puntos

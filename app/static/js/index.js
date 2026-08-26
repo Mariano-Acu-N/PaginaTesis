@@ -315,16 +315,21 @@ class SimularClimaPuntosYHoras {
         const cuerpoHora = document.getElementById("tbodyHora");
         cuerpoHora.innerHTML = "";
 
-        const fila = `<tr>
-                    <td>${data[0].hr_del_dia}</td>
+        data.forEach(item => {
+            if (item.hr_del_dia) {
+                const fila = `<tr>
+                    <td>${item.hr_del_dia}</td>
                 </tr>`;
-        cuerpoHora.innerHTML += fila;
+                cuerpoHora.innerHTML += fila;
+            }
+        });
 
         data.forEach(item => {
             if (item.tiempo_libre) {
                 const fila = `<tr>
                     <td>${item.tiempo_libre}</td>
-                </tr>`;
+                </tr>`
+                ;
                 cuerpoTLibre.innerHTML += fila;
             }
         });
