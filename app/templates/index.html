@@ -60,7 +60,6 @@
                                         onclick="simulador.gestionarInputsUbicacion('cp')">C. Postal</button>
                                 </li>
                             </ul>
-
                             <div class="tab-content border p-3 rounded bg-white">
                                 <div class="tab-pane fade show active" id="panel-ciudad" role="tabpanel">
                                     <label class="form-label-custom">Ciudad Capital</label>
@@ -78,7 +77,7 @@
                                         <option value="Parana, Argentina">Parana, AR</option>
                                         <option value="Posadas, Argentina">Posadas, AR</option>
                                         <option value="Rawson, Argentina">Rawson, AR</option>
-                                        <option value="Resistencia, Argentina">Resistencia</option>
+                                        <option value="Resistencia, Argentina">Resistencia, AR</option>
                                         <option value="Rio Gallegos, Argentina">Rio Gallegos, AR</option>
                                         <option value="Salta, Argentina">Salta, AR</option>
                                         <option value="San juan, Argentina">San Juan, AR</option>
@@ -109,7 +108,8 @@
                     </div>
 
                     <p class="text-muted small fw-bold">CONFIGURACIÓN OPCIONAL PARA GENERAR LOS DATOS</p>
-                    <p class="text-muted small fw-bold">PUEDE CONFIGURAR TODAS LAS OPCIONES JUNTAS O SOLO LAS QUE DESEA</p>
+                    <p class="text-muted small fw-bold">PUEDE CONFIGURAR TODAS LAS OPCIONES JUNTAS O SOLO LAS QUE DESEA
+                    </p>
 
                     <div class="card shadow-sm mb-3 border-start border-4 border-secondary opacity-75" id="card-pois">
                         <div class="card-header bg-white py-2">
@@ -146,6 +146,12 @@
                             </div>
                         </div>
                         <div class="card-body section-content" id="content-clima" style="display: none;">
+                            <label class="form-label-custom">Cantidad de datos ambientales a generar</label>
+                            <div class="input-group mb-3">
+                                <!--<span class="input-group-text">Mostrar</span>-->
+                                <input type="number" id="cantAmb" class="form-control"
+                                    placeholder="Ingresar Cantidad" min="1">
+                            </div>
                             <label class="form-label-custom d-block mb-2">Método de Obtención</label>
                             <div class="d-flex gap-3 mb-3">
                                 <div class="form-check">
@@ -187,6 +193,19 @@
                             </div>
                         </div>
                         <div class="card-body section-content" id="content-tiempo">
+                            <label class="form-label-custom">Cantidad de datos a generar de hora y tiempo libre</label>
+                            <div class="input-group mb-3">
+                                <!--<span class="input-group-text">Mostrar</span>-->
+                                <input type="number" id="cantTLibre" class="form-control"
+                                    placeholder="Cantidad a generar" min="1">
+                            </div>
+                            <label class="form-label-custom">Configuración de la Hora (Formato 24HS)</label>
+                            <div class="row g-2 mb-3">
+                                <div class="col-6"><input type="text" class="form-control" id="hrMin"
+                                        placeholder="Inicio (HH:MM) / (HH)"></div>
+                                <div class="col-6"><input type="text" class="form-control" id="hrMax"
+                                        placeholder="Fin (HH:MM) / (HH)"></div>
+                            </div>
                             <label class="form-label-custom d-block mb-2">Método de Simulación</label>
                             <div class="d-flex gap-3 mb-3">
                                 <div class="form-check">
@@ -201,19 +220,6 @@
                                     <label class="form-check-label small" for="radioManual">Manual (Ingresar
                                         datos)</label>
                                 </div>
-                            </div>
-                            <label class="form-label-custom">Cantidad de datos a generar</label>
-                            <div class="input-group mb-3">
-                                <!--<span class="input-group-text">Mostrar</span>-->
-                                <input type="number" id="cantTLibre" class="form-control"
-                                    placeholder="Cantidad a generar" min="1">
-                            </div>
-                            <label class="form-label-custom">Configuración de la Hora (Formato 24HS)</label>
-                            <div class="row g-2 mb-3">
-                                <div class="col-6"><input type="text" class="form-control" id="hrMin"
-                                        placeholder="Inicio (HH:MM) / (HH)"></div>
-                                <div class="col-6"><input type="text" class="form-control" id="hrMax"
-                                        placeholder="Fin (HH:MM) / (HH)"></div>
                             </div>
                             <div id="grupo-probabilidades">
                                 <label class="form-label-custom">Probabilidades de Tiempo Libre (sumando las 4 debe dar
@@ -257,7 +263,8 @@
                                         <th>Longitud</th>
                                         <th>¿En UNSE?
                                             <!-- Example using a standard Font Awesome icon -->
-                                            <i class="fa fa-info-circle" title="En UNSE muestra los puntos que se encuentran dentro de los limites perimetrales del establecimiento, el punto puede estar generado dentro del radio indicado aunque fuera del edificio de la UNSE."></i>
+                                            <i class="fa fa-info-circle"
+                                                title="En UNSE muestra los puntos que se encuentran dentro de los limites perimetrales del establecimiento, el punto puede estar generado dentro del radio indicado aunque fuera del edificio de la UNSE."></i>
                                         </th>
                                     </tr>
                                 </thead>

@@ -50,14 +50,14 @@ class ApiController:
                 tiempo_libre = self.laplace() #minutos
                 data['tiempo'].append({'tiempo_libre': tiempo_libre, 'hr_del_dia': f"{hrnueva}:{minnuevos}"})
                 i+=1
-            data['tiempo'].append({'unidad_medida_tiempo_libre': 'minutos', 'unidad_medida_hr_del_dia': '24hr'})
+            data['tiempo'].append({'unidad_medida_tiempo_libre': 'minutos / hora', 'unidad_medida_hr_del_dia': '24hr'})
         else:
             while i < info.get('cantTLibre'):
                 hrnueva, minnuevos = self.generar_hora(info)
                 tiempo_libre = self.transInvFunDisc(info.get('p1'),info.get('p2'),info.get('p3')) #minutos
                 data['tiempo'].append({'tiempo_libre': tiempo_libre, 'hr_del_dia': f"{hrnueva}:{minnuevos}"})
                 i+=1
-            data['tiempo'].append({'unidad_medida_tiempo_libre': 'minutos'})
+            data['tiempo'].append({'unidad_medida_tiempo_libre': 'minutos', 'unidad_medida_hr_del_dia': '24hr'})
         return jsonify(data)
         #return jsonify(data['tiempo'])
 
@@ -67,13 +67,21 @@ class ApiController:
         hrhasta, mhasta = self.procesar_hora(info.get('hrhasta'))
         total_min_desde = hrdesde * 60 + mdesde
         total_min_hasta = hrhasta * 60 + mhasta
+
+        # Si la hora de fin es menor a la de inicio, asume que cruzó la medianoche (día siguiente)
+        if total_min_hasta < total_min_desde:
+             total_min_hasta += 1440  # 24 horas * 60 minutos
+
         total_min_nuevo = self.uniforme(total_min_desde, total_min_hasta)
+
         hrnueva = int((total_min_nuevo // 60) % 24)
         minnuevos = int(total_min_nuevo % 60)
-        if minnuevos >=0 and minnuevos <=9: # Para agregar un cero a la derecha cuando devuelve los minutos en un solo digito
-            minnuevos = int(str(f"{minnuevos}0"))
-        print(hrnueva, minnuevos)
-        return hrnueva, minnuevos
+
+        # El :02d garantiza 2 dígitos agregando '0' si es de 1 solo dígito, :02d funciona con tipo de datos int
+        hrformateada = f"{hrnueva:02d}"
+        minformateado = f"{minnuevos:02d}"
+
+        return hrformateada, minformateado
 
     def procesar_hora(self, hora_str):
     # Verificamos si la cadena contiene los dos puntos
@@ -90,29 +98,29 @@ class ApiController:
 
     def datosManuales(self):
         data = {'id_Simulacion': self.id_Simulacion, 'fechaHora_Generacion': datetime.now(), 'clima': []}
+        cont = 0
         info = request.get_json()
-        temp = self.uniforme(info.get('tempmin'), info.get('tempmax'))
-        hum = self.normal(info.get('humDeseada'), info.get('humFluctuacion')) # No aplico la multiplicacion por 0.1 porque ya debería conocer la desviación estandar, diferente el caso de que cuando la obtengo de la API
-        if hum > 100:
-            hum = 100
-        elif hum < 0:
-            hum = 0
-        if (self.primera_sim):
-            self.id_Simulacion += 1
-            # round(temp, 1) para que tome 1 decimal, el dato ya es del tipo float
-            data['clima'].append({'temp': round(temp, 1), 'unidad_medida_temp': 'grados', 'hum': int(hum), 'unidad_medida_hum': 'porcentaje'})
-            # data = [{'id_Simulacion': self.id_Simulacion, 'fechaHora_Generacion': datetime.now(), 'temp': round(temp, 1), 'unidad_medida_temp': 'grados', 'hum': int(hum), 'unidad_medida_hum': 'porcentaje'}]
-            self.primera_sim = False
-        else:
-            # round(temp, 1) para que tome 1 decimal, el dato ya es del tipo float
-            data['clima'].append({'temp': round(temp, 1), 'unidad_medida_temp': 'grados', 'hum': int(hum), 'unidad_medida_hum': 'porcentaje'})
-            #data = [{'id_Simulacion': self.id_Simulacion, 'fechaHora_Generacion': datetime.now(), 'temp': round(temp, 1), 'unidad_medida_temp': 'grados', 'hum': int(hum), 'unidad_medida_hum': 'porcentaje'}]
-        # round(temp, 1) para que tome 1 decimal, el dato ya es del tipo float
-        # data = [{'id_Simulacion': self.id_Simulacion, 'fechaHora_Generacion': datetime.now(), 'temp': round(temp, 1), 'unidad_medida_temp': 'grados', 'hum': int(hum), 'unidad_medida_hum': 'porcentaje'}]
+        while cont < int(info.get('cantAmb')):
+            temp = self.uniforme(info.get('tempmin'), info.get('tempmax'))
+            hum = self.normal(info.get('humDeseada'), info.get('humFluctuacion')) # No aplico la multiplicacion por 0.1 porque ya debería conocer la desviación estandar, diferente el caso de que cuando la obtengo de la API
+            if hum > 100:
+                hum = 100
+            elif hum < 0:
+                hum = 0
+            if (self.primera_sim):
+                self.id_Simulacion += 1
+                # round(temp, 1) para que tome 1 decimal, el dato ya es del tipo float
+                data['clima'].append({'temp': round(temp, 1), 'hum': int(hum)})
+                self.primera_sim = False
+            else:
+                data['clima'].append({'temp': round(temp, 1), 'hum': int(hum)})
+            cont+=1
+        data['clima'].append({'unidad_medida_temp': 'grados', 'unidad_medida_hum': 'porcentaje'})
         return jsonify(data)
 
     def datosRealesAPI(self):
         data = {'id_Simulacion': self.id_Simulacion, 'fechaHora_Generacion': datetime.now(), 'clima': []}
+        cont = 0
         apiser = ApiService(Config.api_base_url_combo_city, Config.api_key, Config.api_type,
                             Config.api_base_url_weather, Config.api_key_weather, Config.api_type_weather)
         info = request.get_json()
@@ -125,25 +133,25 @@ class ApiController:
         else:
             latlon = info.get('lat') + ", " + info.get('lng')
             pronostico = apiser.clima(latlon)
-        temp = self.uniforme(pronostico['forecast']['forecastday'][0]['day']['mintemp_c'], pronostico['forecast']['forecastday'][0]['day']['maxtemp_c'])
-        desviacion_estandar = pronostico['forecast']['forecastday'][0]['day']['avghumidity'] * 0.1 # se multiplica por 0.1 (10%) = 5% de desviacion propuesta por el fabricante + 5% para abarcar posibles ruidos provenientes del ambiente
-        hum = self.normal(pronostico['forecast']['forecastday'][0]['day']['avghumidity'], desviacion_estandar)
-        if hum > 100:
-            hum = 100
-        elif hum < 0:
-            hum = 0
-        if (self.primera_sim):
-            self.id_Simulacion += 1
-            # round(temp, 1) para que tome 1 decimal, el dato ya es del tipo float
-            data['clima'].append({'temp': round(temp, 1), 'unidad_medida_temp': 'grados', 'hum': int(hum), 'unidad_medida_hum': 'porcentaje'})
-            #data = [{'id_Simulacion': self.id_Simulacion, 'fechaHora_Generacion': datetime.now(), 'temp': round(temp, 1), 'unidad_medida_temp': 'grados', 'hum': int(hum), 'unidad_medida_hum': 'porcentaje'}]
-            self.primera_sim = False
-        else:
-            # round(temp, 1) para que tome 1 decimal, el dato ya es del tipo float
-            data['clima'].append({'temp': round(temp, 1), 'unidad_medida_temp': 'grados', 'hum': int(hum), 'unidad_medida_hum': 'porcentaje'})
-            #data = [{'id_Simulacion': self.id_Simulacion, 'fechaHora_Generacion': datetime.now(), 'temp': round(temp, 1), 'unidad_medida_temp': 'grados', 'hum': int(hum), 'unidad_medida_hum': 'porcentaje'}]
-        # round(temp, 1) para que tome 1 decimal, el dato ya es del tipo float
-        # data = [{'id_Simulacion': self.id_Simulacion, 'fechaHora_Generacion': datetime.now(), 'temp': round(temp, 1), 'unidad_medida_temp': 'grados', 'hum': int(hum), 'unidad_medida_hum': 'porcentaje'}]
+        print ()
+        while cont < int(info.get('cantAmb')):
+            temp = self.uniforme(pronostico['forecast']['forecastday'][0]['day']['mintemp_c'], pronostico['forecast']['forecastday'][0]['day']['maxtemp_c'])
+            desviacion_estandar = pronostico['forecast']['forecastday'][0]['day']['avghumidity'] * 0.1 # se multiplica por 0.1 (10%) = 5% de desviacion propuesta por el fabricante + 5% para abarcar posibles ruidos provenientes del ambiente
+            hum = self.normal(pronostico['forecast']['forecastday'][0]['day']['avghumidity'], desviacion_estandar)
+            if hum > 100:
+                hum = 100
+            elif hum < 0:
+                hum = 0
+            if (self.primera_sim):
+                self.id_Simulacion += 1
+                # round(temp, 1) para que tome 1 decimal, el dato ya es del tipo float
+                data['clima'].append({'temp': round(temp, 1), 'hum': int(hum)})
+                self.primera_sim = False
+            else:
+                # round(temp, 1) para que tome 1 decimal, el dato ya es del tipo float
+                data['clima'].append({'temp': round(temp, 1), 'hum': int(hum)})
+            cont+=1
+        data['clima'].append({'unidad_medida_temp': 'grados', 'unidad_medida_hum': 'porcentaje'})
         return jsonify(data)    
 
 ############################# --- CONTEXTO GEOGRAFICO --- #############################

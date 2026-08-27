@@ -176,11 +176,10 @@ class SimularClimaPuntosYHoras {
         const hrMin = document.getElementById("hrMin").value;
         const hrMax = document.getElementById("hrMax").value;
         const cantTLibre = parseInt(document.getElementById("cantTLibre").value);
-        const p1 = parseFloat(document.getElementById("prob1").value) / 100;
-        const p2 = parseFloat(document.getElementById("prob2").value) / 100;
-        const p3 = parseFloat(document.getElementById("prob3").value) / 100;
-        const p4 = parseFloat(document.getElementById("prob4").value) / 100;
-        //const checkTL = document.getElementById('checkTL').checked;
+        const p1 = parseFloat(document.getElementById("prob1").value);
+        const p2 = parseFloat(document.getElementById("prob2").value);
+        const p3 = parseFloat(document.getElementById("prob3").value);
+        const p4 = parseFloat(document.getElementById("prob4").value);
         const esLaplace = document.getElementById('radioLaplace').checked;
         if (this.validarHora(hrMin)) {
             if (this.validarHora(hrMax)) {
@@ -195,17 +194,6 @@ class SimularClimaPuntosYHoras {
                         confirmButtonColor: '#3085d6'
                     });
                 }
-                //if (!Number.isNaN(cantTLibre)) {
-                    //esLaplace ? this.generarHr_Tiempos(hrMin, hrMax, cantTLibre, p1, p2, p3, p4, 0) : this.validarProbTransInvDisc(hrMin, hrMax, cantTLibre, p1, p2, p3, p4, 1)
-                /*} else {
-                    Swal.fire({
-                        title: '¡Atención!',
-                        text: 'Defina la cantidad de datos/puntos a generar para continuar.',
-                        icon: 'warning',
-                        confirmButtonText: 'Aceptar',
-                        confirmButtonColor: '#3085d6'
-                    });
-                }*/
             } else {
                 Swal.fire({
                     title: '¡Atención!',
@@ -250,8 +238,12 @@ class SimularClimaPuntosYHoras {
                 if (!Number.isNaN(p3)) {
                     if (!Number.isNaN(p4)) {
                         totalProb = p1 + p2 + p3 + p4;
-                        if (totalProb === 1) {
-                            this.generarHr_Tiempos(hrdesde, hrhasta, cantTLibre, p1, p2, p3, p4, 1);
+                        if (totalProb === 100) {
+                            const prob1 = p1 / 100;
+                            const prob2 = p2 / 100;
+                            const prob3 = p3 / 100;
+                            const prob4 = p4 / 100;
+                            this.generarHr_Tiempos(hrdesde, hrhasta, cantTLibre, prob1, prob2, prob3, prob4, 1);
                         } else {
                             Swal.fire({
                                 title: '¡Atención!',
@@ -451,32 +443,26 @@ class SimularClimaPuntosYHoras {
             });
             return; // Cortamos la ejecución si no hay ubicación
             }
-                //alert("Las coordenadas ingresadas no son válidas.");
-                //return;
-            //}
         }
 
         // 4. Lógica de Disparo
+        const cantAmb = document.getElementById("cantAmb").value;
         if (esAPI) {
             // Si es API, llamamos a tu función que busca datos reales (OpenWeather, etc.)
-            this.datosRealesAPI(city, cp, lat, lng);
+            this.datosRealesAPI(city, cp, lat, lng, cantAmb);
         } else {
             // Si es Manual, llamamos a la función que captura tus inputs (T. Min, T. Max, etc.)
             const tempmin = parseFloat(document.getElementById("tempMin").value)
             const tempmax = parseFloat(document.getElementById("tempMax").value);
             const humDeseada = parseFloat(document.getElementById("humDes").value);
             const humFluctuacion = parseFloat(document.getElementById("humFluc").value);
-            this.validarDatosTempHum(tempmin, tempmax, humDeseada, humFluctuacion);
+            this.validarDatosTempHum(tempmin, tempmax, humDeseada, humFluctuacion, cantAmb);
         }
     }
 
-    validarDatosTempHum(tempmin, tempmax, humDeseada, humFluctuacion) {
-        /*if (!Number.isNaN(tempmin)) {
-            if (!Number.isNaN(tempmax)) {
-                if (!Number.isNaN(humDeseada)) {
-                    if (!Number.isNaN(humFluctuacion)) {*/
+    validarDatosTempHum(tempmin, tempmax, humDeseada, humFluctuacion, cantAmb) {
                     if (tempmax > tempmin) {
-                        this.datosManuales(tempmin, tempmax, humDeseada, humFluctuacion);
+                        this.datosManuales(tempmin, tempmax, humDeseada, humFluctuacion, cantAmb);
                     } else {
                         Swal.fire({
                             title: '¡Atención!',
@@ -486,47 +472,11 @@ class SimularClimaPuntosYHoras {
                             confirmButtonColor: '#3085d6'
                         });
                     }
-                    /*} else {
-                        Swal.fire({
-                            title: '¡Atención!',
-                            text: 'Debe ingresar un valor de Variación de la humedad',
-                            icon: 'warning',
-                            confirmButtonText: 'Aceptar',
-                            confirmButtonColor: '#3085d6'
-                        });
-                    }
-                } else {
-                    Swal.fire({
-                        title: '¡Atención!',
-                        text: 'Debe ingresar un valor Base/Media de humedad',
-                        icon: 'warning',
-                        confirmButtonText: 'Aceptar',
-                        confirmButtonColor: '#3085d6'
-                    });
-                }
-            } else {
-                Swal.fire({
-                    title: '¡Atención!',
-                    text: 'Debe ingresar un valor de Teperatura Máxima',
-                    icon: 'warning',
-                    confirmButtonText: 'Aceptar',
-                    confirmButtonColor: '#3085d6'
-                });
-            }
-        } else {
-            Swal.fire({
-                title: '¡Atención!',
-                text: 'Debe ingresar un valor de Temperatura Mínima',
-                icon: 'warning',
-                confirmButtonText: 'Aceptar',
-                confirmButtonColor: '#3085d6'
-            });
-        }*/
     }
 
-    datosManuales(tempmin, tempmax, humDeseada, humFluctuacion) {
+    datosManuales(tempmin, tempmax, humDeseada, humFluctuacion, cantAmb) {
         // const inicio = performance.now();
-        const info = { tempmin, tempmax, humDeseada, humFluctuacion};
+        const info = { tempmin, tempmax, humDeseada, humFluctuacion, cantAmb};
         this.postJSON('/datosManuales', info, (data) => {
             this.dataGlobal.id_Simulacion = data.id_Simulacion;
             this.dataGlobal.fechaHora_Simulacion = data.fechaHora_Generacion;
@@ -535,8 +485,8 @@ class SimularClimaPuntosYHoras {
         });
     }
 
-    datosRealesAPI(city, cp, lat, lng) {
-        this.postJSON('/datosRealesAPI', { city, cp, lat, lng}, (data) => {
+    datosRealesAPI(city, cp, lat, lng, cantAmb) {
+        this.postJSON('/datosRealesAPI', { city, cp, lat, lng, cantAmb}, (data) => {
             this.dataGlobal.id_Simulacion = data.id_Simulacion;
             this.dataGlobal.fechaHora_Simulacion = data.fechaHora_Generacion;
             this.dataGlobal.clima = data.clima;
@@ -548,11 +498,15 @@ class SimularClimaPuntosYHoras {
         const cuerpo = document.getElementById("tbodyAmb");
         cuerpo.innerHTML = "";
         // data[0].temp así para que muestre el decimal de la temperatura, el dato ya viene como float
-        const fila = `<tr>
-                    <td>${(data[0].temp)}ºC</td>
-                    <td>${parseInt(data[0].hum)} %</td>
+        data.forEach(item => {
+            if (item.temp) {
+                const fila = `<tr>
+                    <td>${(item.temp)}ºC</td>
+                    <td>${parseInt(item.hum)} %</td>
                 </tr>`;
-        cuerpo.innerHTML += fila;
+                cuerpo.innerHTML += fila;
+            }
+        })
 
         this.saveBtn.disabled = false;
     }
