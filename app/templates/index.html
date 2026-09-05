@@ -107,138 +107,152 @@
                         </div>
                     </div>
 
-                    <p class="text-muted small fw-bold">CONFIGURACIÓN OPCIONAL PARA GENERAR LOS DATOS</p>
-                    <p class="text-muted small fw-bold">PUEDE CONFIGURAR TODAS LAS OPCIONES JUNTAS O SOLO LAS QUE DESEA
-                    </p>
-
-                    <div class="card shadow-sm mb-3 border-start border-4 border-secondary opacity-75" id="card-pois">
-                        <div class="card-header bg-white py-2">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="checkPois"
-                                    onchange="simulador.toggleSection('pois')">
-                                <label class="form-check-label fw-bold small">PUNTOS DE INTERÉS</label>
-                            </div>
+                    <p class="text-muted small fw-bold">CONFIGURACIÓN DE DIMENSIONES DE CONTEXTO</p>
+                    <div class="card shadow-sm mb-4 border-start border-4 border-primary">
+                        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0"><i class="bi bi-card-checklist text-primary me-2"></i>2. Dimensiones a simular
+                            </h5>
+                            <span class="badge bg-primary">REQUERIDO UNO O MÁS</span>
                         </div>
-                        <div class="card-body section-content" id="content-pois">
-                            <div class="row g-2">
-                                <div class="col-6"><input type="number" class="form-control" id="radio"
-                                        placeholder="Radio (metros)" type="number" min="1" disabled></div>
-                                <div class="col-6"><input type="number" class="form-control" id="cantPoints"
-                                        placeholder="Cantidad a generar" type="number" min="1" disabled></div>
-                                <div class="col-12">
-                                    <select class="form-select" id="categories" disabled>
-                                        <option value="">Categoría...</option>
-                                        <option value="Universidad">Universidades</option>
-                                        <option value="Hospital">Hospitales</option>
-                                        <option value="Persona">Personas</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
 
-                    <div class="card shadow-sm mb-3 border-start border-4 border-secondary opacity-75" id="card-clima">
-                        <div class="card-header bg-white py-2">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="checkClima"
-                                    onchange="simulador.toggleSection('clima')">
-                                <label class="form-check-label fw-bold small">AMBIENTE (CLIMA)</label>
-                            </div>
-                        </div>
-                        <div class="card-body section-content" id="content-clima" style="display: none;">
-                            <label class="form-label-custom">Cantidad de datos ambientales a generar</label>
-                            <div class="input-group mb-3">
-                                <!--<span class="input-group-text">Mostrar</span>-->
-                                <input type="number" id="cantAmb" class="form-control"
-                                    placeholder="Ingresar Cantidad" min="1">
-                            </div>
-                            <label class="form-label-custom d-block mb-2">Método de Obtención</label>
-                            <div class="d-flex gap-3 mb-3">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="metodoClima" id="radioClimaAPI"
-                                        value="api" checked onchange="simulador.actualizarInterfazClima()">
-                                    <label class="form-check-label small" for="radioClimaAPI">Datos Reales (API)</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="metodoClima"
-                                        id="radioClimaManual" value="manual"
-                                        onchange="simulador.actualizarInterfazClima()">
-                                    <label class="form-check-label small" for="radioClimaManual">Manual (Ingresar
-                                        datos)</label>
+                        <div class="card shadow-sm mb-3 mx-3 mt-3 border-start border-4 border-secondary opacity-75"
+                            id="card-pois">
+                            <div class="card-header bg-white py-2">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="checkPois"
+                                        onchange="simulador.toggleSection('pois')">
+                                    <label class="form-check-label fw-bold small">PUNTOS DE INTERÉS</label>
                                 </div>
                             </div>
-
-                            <div id="grupo-clima-inputs">
-                                <div class="row g-2 mb-2">
-                                    <div class="col-6"><input type="number" class="form-control" id="tempMin"
-                                            placeholder="Temp. Min" step="any" disabled></div>
-                                    <div class="col-6"><input type="number" class="form-control" id="tempMax"
-                                            placeholder="Temp. Max" step="any" disabled></div>
-                                </div>
+                            <div class="card-body section-content" id="content-pois">
                                 <div class="row g-2">
-                                    <div class="col-6"><input type="number" class="form-control" id="humDes"
-                                            placeholder="Hum. Base" min="0" disabled></div>
-                                    <div class="col-6"><input type="number" class="form-control" id="humFluc"
-                                            placeholder="Variacion" min="0" disabled></div>
+                                    <div class="col-6"><input type="number" class="form-control" id="radio"
+                                            placeholder="Radio (metros)" type="number" min="1" disabled></div>
+                                    <div class="col-6"><input type="number" class="form-control" id="cantPoints"
+                                            placeholder="Cantidad a generar" type="number" min="1" disabled></div>
+                                    <div class="col-12">
+                                        <select class="form-select" id="categories" disabled>
+                                            <option value="">Categoría...</option>
+                                            <option value="Universidad">Universidades</option>
+                                            <option value="Hospital">Hospitales</option>
+                                            <option value="Persona">Personas</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card shadow-sm mb-3 mx-3 border-start border-4 border-secondary opacity-75"
+                            id="card-clima">
+                            <div class="card-header bg-white py-2">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="checkClima"
+                                        onchange="simulador.toggleSection('clima')">
+                                    <label class="form-check-label fw-bold small">AMBIENTE (CLIMA)</label>
+                                </div>
+                            </div>
+                            <div class="card-body section-content" id="content-clima" style="display: none;">
+                                <label class="form-label-custom">Cantidad de datos ambientales a generar</label>
+                                <div class="input-group mb-3">
+                                    <!--<span class="input-group-text">Mostrar</span>-->
+                                    <input type="number" id="cantAmb" class="form-control"
+                                        placeholder="Ingresar Cantidad" min="1">
+                                </div>
+                                <label class="form-label-custom d-block mb-2">Método de Obtención</label>
+                                <div class="d-flex gap-3 mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="metodoClima"
+                                            id="radioClimaAPI" value="api" checked
+                                            onchange="simulador.actualizarInterfazClima()">
+                                        <label class="form-check-label small" for="radioClimaAPI">Datos Reales
+                                            (API)</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="metodoClima"
+                                            id="radioClimaManual" value="manual"
+                                            onchange="simulador.actualizarInterfazClima()">
+                                        <label class="form-check-label small" for="radioClimaManual">Manual (Ingresar
+                                            datos)</label>
+                                    </div>
+                                </div>
+
+                                <div id="grupo-clima-inputs">
+                                    <div class="row g-2 mb-2">
+                                        <div class="col-6"><input type="number" class="form-control" id="tempMin"
+                                                placeholder="Temp. Min" step="any" disabled></div>
+                                        <div class="col-6"><input type="number" class="form-control" id="tempMax"
+                                                placeholder="Temp. Max" step="any" disabled></div>
+                                    </div>
+                                    <div class="row g-2">
+                                        <div class="col-6"><input type="number" class="form-control" id="humDes"
+                                                placeholder="Hum. Base" min="0" disabled></div>
+                                        <div class="col-6"><input type="number" class="form-control" id="humFluc"
+                                                placeholder="Variacion" min="0" disabled></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card shadow-sm mb-3 mx-3 border-start border-4 border-secondary opacity-75"
+                            id="card-tiempo">
+                            <div class="card-header bg-white py-2">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="checkTiempo"
+                                        onchange="simulador.toggleSection('tiempo')">
+                                    <label class="form-check-label fw-bold small">TEMPORAL</label>
+                                </div>
+                            </div>
+                            <div class="card-body section-content" id="content-tiempo">
+                                <label class="form-label-custom">Cantidad de datos a generar de hora y tiempo
+                                    libre</label>
+                                <div class="input-group mb-3">
+                                    <!--<span class="input-group-text">Mostrar</span>-->
+                                    <input type="number" id="cantTLibre" class="form-control"
+                                        placeholder="Cantidad a generar" min="1">
+                                </div>
+                                <label class="form-label-custom">Configuración de la Hora (Formato 24HS)</label>
+                                <div class="row g-2 mb-3">
+                                    <div class="col-6"><input type="text" class="form-control" id="hrMin"
+                                            placeholder="Inicio (HH:MM) / (HH)"></div>
+                                    <div class="col-6"><input type="text" class="form-control" id="hrMax"
+                                            placeholder="Fin (HH:MM) / (HH)"></div>
+                                </div>
+                                <label class="form-label-custom d-block mb-2">Método de Simulación</label>
+                                <div class="d-flex gap-3 mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="metodoTpo" id="radioLaplace"
+                                            value="laplace" checked onchange="simulador.actualizarInterfazTemporal()">
+                                        <label class="form-check-label small" for="radioLaplace">Laplace (Prob.
+                                            fijas)</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="metodoTpo" id="radioManual"
+                                            value="manual" onchange="simulador.actualizarInterfazTemporal()">
+                                        <label class="form-check-label small" for="radioManual">Manual (Ingresar
+                                            datos)</label>
+                                    </div>
+                                </div>
+                                <div id="grupo-probabilidades">
+                                    <label class="form-label-custom">Probabilidades de Tiempo Libre (sumando las 4 debe
+                                        dar
+                                        100%)</label>
+                                    <div class="row g-2 mb-2">
+                                        <div class="col-6"><input type="number" id="prob1" class="form-control"
+                                                placeholder="< 15 min"></div>
+                                        <div class="col-6"><input type="number" id="prob2" class="form-control"
+                                                placeholder="15-30 min"></div>
+                                    </div>
+                                    <div class="row g-2 mb-2">
+                                        <div class="col-6"><input type="number" id="prob3" class="form-control"
+                                                placeholder="30-50 min"></div>
+                                        <div class="col-6"><input type="number" id="prob4" class="form-control"
+                                                placeholder="1 hr o más"></div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div class="card shadow-sm mb-3 border-start border-4 border-secondary opacity-75" id="card-tiempo">
-                        <div class="card-header bg-white py-2">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="checkTiempo"
-                                    onchange="simulador.toggleSection('tiempo')">
-                                <label class="form-check-label fw-bold small">TEMPORAL</label>
-                            </div>
-                        </div>
-                        <div class="card-body section-content" id="content-tiempo">
-                            <label class="form-label-custom">Cantidad de datos a generar de hora y tiempo libre</label>
-                            <div class="input-group mb-3">
-                                <!--<span class="input-group-text">Mostrar</span>-->
-                                <input type="number" id="cantTLibre" class="form-control"
-                                    placeholder="Cantidad a generar" min="1">
-                            </div>
-                            <label class="form-label-custom">Configuración de la Hora (Formato 24HS)</label>
-                            <div class="row g-2 mb-3">
-                                <div class="col-6"><input type="text" class="form-control" id="hrMin"
-                                        placeholder="Inicio (HH:MM) / (HH)"></div>
-                                <div class="col-6"><input type="text" class="form-control" id="hrMax"
-                                        placeholder="Fin (HH:MM) / (HH)"></div>
-                            </div>
-                            <label class="form-label-custom d-block mb-2">Método de Simulación</label>
-                            <div class="d-flex gap-3 mb-3">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="metodoTpo" id="radioLaplace"
-                                        value="laplace" checked onchange="simulador.actualizarInterfazTemporal()">
-                                    <label class="form-check-label small" for="radioLaplace">Laplace (Prob.
-                                        fijas)</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="metodoTpo" id="radioManual"
-                                        value="manual" onchange="simulador.actualizarInterfazTemporal()">
-                                    <label class="form-check-label small" for="radioManual">Manual (Ingresar
-                                        datos)</label>
-                                </div>
-                            </div>
-                            <div id="grupo-probabilidades">
-                                <label class="form-label-custom">Probabilidades de Tiempo Libre (sumando las 4 debe dar
-                                    100%)</label>
-                                <div class="row g-2 mb-2">
-                                    <div class="col-6"><input type="number" id="prob1" class="form-control"
-                                            placeholder="< 15 min"></div>
-                                    <div class="col-6"><input type="number" id="prob2" class="form-control"
-                                            placeholder="15-30 min"></div>
-                                </div>
-                                <div class="row g-2 mb-2">
-                                    <div class="col-6"><input type="number" id="prob3" class="form-control"
-                                            placeholder="30-50 min"></div>
-                                    <div class="col-6"><input type="number" id="prob4" class="form-control"
-                                            placeholder="1 hr o más"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+
+
                     <button type="submit" class="btn btn-dark w-100 py-3 fw-bold mt-3">GENERAR DATOS</button>
                 </form>
             </div>
