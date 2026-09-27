@@ -1,6 +1,7 @@
 class SimularClimaPuntosYHoras {
     constructor(formId, saveBtnId) {
-        this.dataGlobal = {id_Simulacion: null, fechaHora_Simulacion:null, ubicacion: null, clima: null, tiempo: null };
+        //this.dataGlobal = {id_Simulacion: null, fechaHora_Simulacion:null, ubicacion: null, clima: null, tiempo: null };
+        this.dataGlobal = {id_Simulacion: null, ubicacion: null, clima: null, tiempo: null };
         this.form = document.getElementById(formId);
         this.saveBtn = document.getElementById(saveBtnId);
 
@@ -38,11 +39,12 @@ class SimularClimaPuntosYHoras {
     }
 
     toggleSection(sectionId) {
+
         const isChecked = document.getElementById('check' + sectionId.charAt(0).toUpperCase() + sectionId.slice(1)).checked;
         const card = document.getElementById('card-' + sectionId);
         const content = document.getElementById('content-' + sectionId);
         const inputs = content.querySelectorAll('input, select');
-
+        
         if (isChecked) {
             card.classList.remove('opacity-75', 'border-secondary');
             card.classList.add('border-danger');
@@ -70,13 +72,13 @@ class SimularClimaPuntosYHoras {
 
     actualizarInterfazTemporal() {
         // Verificamos si la opción seleccionada es Laplace
-        const esLaplace = document.getElementById('radioLaplace').checked;
+        const metodoObtencionTiempo = document.getElementById('radioLaplace').checked;
         // Obtenemos todos los inputs dentro del contenedor de probabilidades
         const inputsProb = document.querySelectorAll('#grupo-probabilidades input');
         inputsProb.forEach(input => {
             // Bloqueamos si es Laplace, habilitamos si es Manual
-            input.disabled = esLaplace;
-            if (esLaplace) {
+            input.disabled = metodoObtencionTiempo;
+            if (metodoObtencionTiempo) {
                 // Opcional: Limpiar el valor o mostrar un indicador de que se usarán valores internos
                 input.value = "";
                 input.classList.add('bg-light'); // Le da un tono grisáceo para notar el bloqueo
@@ -89,16 +91,16 @@ class SimularClimaPuntosYHoras {
 
     actualizarInterfazClima() {
         // 1. Detectamos si la opción "API" está marcada
-        const esAPI = document.getElementById('radioClimaAPI').checked;
+        const metodoObtencionClima = document.getElementById('radioClimaAPI').checked;
 
         // 2. Buscamos todos los inputs de la sección ambiente
         const inputs = document.querySelectorAll('#grupo-clima-inputs input');
 
         inputs.forEach(input => {
             // 3. Si es API, desactivamos (disabled = true). Si es Manual, activamos (false)
-            input.disabled = esAPI;
+            input.disabled = metodoObtencionClima;
 
-            if (esAPI) {
+            if (metodoObtencionClima) {
                 input.value = ""; // Limpiamos para que no queden datos viejos
                 input.classList.add('bg-light'); // Efecto visual de campo bloqueado
             } else {
@@ -114,7 +116,7 @@ class SimularClimaPuntosYHoras {
         // 1. Declaramos las variables vacías
         let city = null;
         let lat = null;
-        let lng = null;
+        let lon = null;
         let cp = null;
         
         // Endpoint explícito para reiniciar la variable primera_sim en el backend antes de ejecutar la simulación
@@ -124,13 +126,70 @@ class SimularClimaPuntosYHoras {
         // Esto evita que si hay algo escrito en "Coordenadas" pero estás en "Ciudad", se mezcle.
         if (this.metodoUbicacionActual === 'ciudad') {
             city = document.getElementById('input-ciudad').value;
+            const info = { city };
+            await this.postJSON('/obtenerLatLon', info, (data) => {
+                lat = data.lat;
+                lon = data.lng;
+                
+                const esLatValida = isFinite(lat) && Math.abs(lat) <= 90;
+                const esLonValida = isFinite(lon) && Math.abs(lon) <= 180;
+            
+                if (!esLatValida) {
+                    Swal.fire({
+                    title: '¡Atención!',
+                    text: 'Coordenada de latitud inválida',
+                    icon: 'warning',
+                    confirmButtonText: 'Aceptar',
+                    confirmButtonColor: '#3085d6'
+                });
+                return; // Cortamos la ejecución si no hay ubicación
+                }
+                else if (!esLonValida) {
+                    Swal.fire({
+                    title: '¡Atención!',
+                    text: 'Coordenada de longitud inválida',
+                    icon: 'warning',
+                    confirmButtonText: 'Aceptar',
+                    confirmButtonColor: '#3085d6'
+                });
+                return; // Cortamos la ejecución si no hay ubicación
+                }
+            });
         }
         else if (this.metodoUbicacionActual === 'coord') {
             lat = document.getElementById('input-lat').value;
-            lng = document.getElementById('input-lng').value;
+            lon = document.getElementById('input-lng').value;
+            // Validación de Coordenadas
+            if (lat && lon) {
+                const esLatValida = isFinite(lat) && Math.abs(lat) <= 90;
+                const esLonValida = isFinite(lon) && Math.abs(lon) <= 180;
+            
+            if (!esLatValida) {
+                Swal.fire({
+                title: '¡Atención!',
+                text: 'Coordenada de latitud inválida',
+                icon: 'warning',
+                confirmButtonText: 'Aceptar',
+                confirmButtonColor: '#3085d6'
+            });
+            return; // Cortamos la ejecución si no hay ubicación
+            }
+            else if (!esLonValida) {
+                Swal.fire({
+                title: '¡Atención!',
+                text: 'Coordenada de longitud inválida',
+                icon: 'warning',
+                confirmButtonText: 'Aceptar',
+                confirmButtonColor: '#3085d6'
+            });
+            return; // Cortamos la ejecución si no hay ubicación
+            }
         }
+        }
+        //else if (this.metodoUbicacionActual === 'cp') {
         else if (this.metodoUbicacionActual === 'cp') {
             cp = document.getElementById('input-cp').value;
+            // Validación de codigo postal
             if (!this.validarFormatoCodigoPostal(cp)) {
                 Swal.fire({
                 title: '¡Atención!',
@@ -139,7 +198,13 @@ class SimularClimaPuntosYHoras {
                 confirmButtonText: 'Aceptar',
                 confirmButtonColor: '#3085d6'
             });
+            return; // Detiene la ejecución si no hay opciones activas
             }
+            const info = { cp };
+            await this.postJSON('/obtenerLatLon', info, (data) => {
+                lat = data.lat;
+                lon = data.lng;
+            });
         }
 
         // 3. Ejecución condicional (Solo si el switch está ON y no hay datos previos)
@@ -147,16 +212,16 @@ class SimularClimaPuntosYHoras {
 
         // --- SIMULACIÓN GEOGRÁFICA ---
         if (document.getElementById('checkPois').checked) {
-            this.simularContextoGeografico(city, cp, lat, lng);
+            this.simularContextoGeografico(lat, lon);
         }
         // --- SIMULACIÓN AMBIENTAL ---
         if (document.getElementById('checkClima').checked) {
         // Pasamos los datos de ubicación por si el clima depende de la zona
-            this.simularContextoAmbiental(city, cp, lat, lng);
+            this.simularContextoAmbiental(lat, lon);
         }
         // --- SIMULACIÓN TEMPORAL ---
         if (document.getElementById('checkTiempo').checked) {
-            this.simularContextoTemporal();
+            this.simularContextoTemporal(lat, lon);
         }
 
         if (!document.getElementById('checkPois').checked && !document.getElementById('checkClima').checked && !document.getElementById('checkTiempo').checked) {
@@ -167,24 +232,25 @@ class SimularClimaPuntosYHoras {
                 confirmButtonText: 'Aceptar',
                 confirmButtonColor: '#3085d6'
             });
+            return; // Detiene la ejecución si no hay opciones activas
         }
     }
 
     ////////////////////////// --- CONTEXTO TEMPORAL --- //////////////////////////
-    simularContextoTemporal() {
+    simularContextoTemporal(lat, lng) {
         // inicio = performance.now();
         const hrMin = document.getElementById("hrMin").value;
         const hrMax = document.getElementById("hrMax").value;
-        const cantTLibre = parseInt(document.getElementById("cantTLibre").value);
+        const cantDatosT = parseInt(document.getElementById("cantDatosT").value);
         const p1 = parseFloat(document.getElementById("prob1").value);
         const p2 = parseFloat(document.getElementById("prob2").value);
         const p3 = parseFloat(document.getElementById("prob3").value);
         const p4 = parseFloat(document.getElementById("prob4").value);
-        const esLaplace = document.getElementById('radioLaplace').checked;
+        const metodoObtencionTiempo = document.getElementById('radioLaplace').checked;
         if (this.validarHora(hrMin)) {
             if (this.validarHora(hrMax)) {
                 if(this.horaAMinutos(hrMin) <= this.horaAMinutos(hrMax)) {
-                    esLaplace ? this.generarHr_Tiempos(hrMin, hrMax, cantTLibre, p1, p2, p3, p4, 0) : this.validarProbTransInvDisc(hrMin, hrMax, cantTLibre, p1, p2, p3, p4, 1)
+                    metodoObtencionTiempo ? this.generarHr_Tiempos(hrMin, hrMax, cantDatosT, p1, p2, p3, p4, lat, lng, 0) : this.validarProbTransInvDisc(hrMin, hrMax, cantDatosT, p1, p2, p3, p4, lat, lng, 1)
                 } else {
                     Swal.fire({
                         title: '¡Atención!',
@@ -231,7 +297,7 @@ class SimularClimaPuntosYHoras {
         return (horas * 60) + minutos;
     }
 
-    validarProbTransInvDisc(hrdesde, hrhasta, cantTLibre, p1, p2, p3, p4, b) {
+    validarProbTransInvDisc(hrdesde, hrhasta, cantDatosT, p1, p2, p3, p4, lat, lng, b) {
         let totalProb = 0;
         if (!Number.isNaN(p1)) {
             if (!Number.isNaN(p2)) {
@@ -243,7 +309,7 @@ class SimularClimaPuntosYHoras {
                             const prob2 = p2 / 100;
                             const prob3 = p3 / 100;
                             const prob4 = p4 / 100;
-                            this.generarHr_Tiempos(hrdesde, hrhasta, cantTLibre, prob1, prob2, prob3, prob4, 1);
+                            this.generarHr_Tiempos(hrdesde, hrhasta, cantDatosT, prob1, prob2, prob3, prob4, lat, lng, b);
                         } else {
                             Swal.fire({
                                 title: '¡Atención!',
@@ -291,12 +357,13 @@ class SimularClimaPuntosYHoras {
         }
     }
 
-    generarHr_Tiempos(hrdesde, hrhasta, cantTLibre, p1, p2, p3, p4, b) {
-        const info = { hrdesde, hrhasta, cantTLibre, p1, p2, p3, p4, b };
+    generarHr_Tiempos(hrdesde, hrhasta, cantDatosT, p1, p2, p3, p4, lat, lng, b) {
+        const info = { hrdesde, hrhasta, cantDatosT, p1, p2, p3, p4, lat, lng, b };
         this.postJSON('/simularContextoTemporal', info, (data) => {
-            this.dataGlobal.id_Simulacion = data.id_Simulacion;
-            this.dataGlobal.fechaHora_Simulacion = data.fechaHora_Generacion;
-            this.dataGlobal.tiempo = data.tiempo;
+            //this.dataGlobal.id_Simulacion = data.id_Simulacion;
+            //this.dataGlobal.fechaHora_Simulacion = data.fechaHora_Generacion;
+            //this.dataGlobal.tiempo = data.tiempo;
+            this.consolidarDatosSimulados(data, 3);
             this.agregarTiempoLibreATablaCoord(data.tiempo)
         });
     };
@@ -325,23 +392,24 @@ class SimularClimaPuntosYHoras {
                 cuerpoTLibre.innerHTML += fila;
             }
         });
+
+        document.getElementById('mapaIframe').src = '/static/mapa.html';
+        this.saveBtn.disabled = false;
     }
 
     ////////////////////////// --- CONTEXTO GEOGRAFICO --- //////////////////////////
-    simularContextoGeografico(city, cp, lat, lon) {
+    simularContextoGeografico(lat, lon) {
 
         const category = document.getElementById("categories").value;
         const radio = document.getElementById("radio").value;
         //const cantPoints = parseInt(document.getElementById("cantPoints").value);
-        const cantPoints = document.getElementById("cantPoints").value;
+        const cantPuntos = document.getElementById("cantPuntos").value;
         if (radio.trim() !== "") {
-            if (cantPoints.trim() !== "") {
+            if (cantPuntos.trim() !== "") {
                 if (category.trim() !== "") {
-                    const info = { city, cp, lat, lon, category, radio, cantPoints };
+                    const info = { lat, lon, category, radio, cantPuntos };
                     this.postJSON('/simularContextoGeografico', info, (data) => {
-                        this.dataGlobal.id_Simulacion = data.id_Simulacion;
-                        this.dataGlobal.fechaHora_Simulacion = data.fechaHora_Generacion;
-                        this.dataGlobal.ubicacion = data.puntosGeograficos;
+                        this.consolidarDatosSimulados(data, 1);
                         this.renderizarResultados(data.puntosGeograficos);
                     });
                 } else {
@@ -399,70 +467,34 @@ class SimularClimaPuntosYHoras {
             }
         });
 
-        document.getElementById('mapaIframe').src = '/static/mapa.html';
+       document.getElementById('mapaIframe').src = '/static/mapa.html';
         this.saveBtn.disabled = false;
     }
 
     ////////////////////////// --- CONTEXTO AMBIENTAL --- //////////////////////////
-
-    simularContextoAmbiental(city, cp, lat, lng) {
+    simularContextoAmbiental(lat, lng) {
 
         // 1. Verificamos cuál método está seleccionado (API o Manual)
-        const esAPI = document.getElementById("radioClimaAPI").checked;
+        const metodoObtencionClima = document.getElementById("radioClimaAPI").checked;
 
-        // 2. Validación de Ubicación (Requisito para ambos métodos)
-        const tieneUbicacion = city || cp || (lat && lng);
-
-        if (!tieneUbicacion) {
-            alert("Debe ingresar una ubicación válida para simular el ambiente.");
-            return; // Cortamos la ejecución si no hay ubicación
-        }
-
-        // 3. Validación de Coordenadas (Solo si se eligió esa solapa)
-        if (lat && lng) {
-            const esLatValida = isFinite(lat) && Math.abs(lat) <= 90;
-            const esLonValida = isFinite(lng) && Math.abs(lng) <= 180;
-
-            if (!esLatValida) {
-                Swal.fire({
-                title: '¡Atención!',
-                text: 'Coordenada de latitud inválida',
-                icon: 'warning',
-                confirmButtonText: 'Aceptar',
-                confirmButtonColor: '#3085d6'
-            });
-            return; // Cortamos la ejecución si no hay ubicación
-            }
-            else if (!esLonValida) {
-                Swal.fire({
-                title: '¡Atención!',
-                text: 'Coordenada de longitud inválida',
-                icon: 'warning',
-                confirmButtonText: 'Aceptar',
-                confirmButtonColor: '#3085d6'
-            });
-            return; // Cortamos la ejecución si no hay ubicación
-            }
-        }
-
-        // 4. Lógica de Disparo
+        // 2. Lógica de Disparo
         const cantAmb = document.getElementById("cantAmb").value;
-        if (esAPI) {
+        if (metodoObtencionClima) {
             // Si es API, llamamos a tu función que busca datos reales (OpenWeather, etc.)
-            this.datosRealesAPI(city, cp, lat, lng, cantAmb);
+            this.simularContextoAmbienteAPI(lat, lng, cantAmb);
         } else {
             // Si es Manual, llamamos a la función que captura tus inputs (T. Min, T. Max, etc.)
             const tempmin = parseFloat(document.getElementById("tempMin").value)
             const tempmax = parseFloat(document.getElementById("tempMax").value);
             const humDeseada = parseFloat(document.getElementById("humDes").value);
             const humFluctuacion = parseFloat(document.getElementById("humFluc").value);
-            this.validarDatosTempHum(tempmin, tempmax, humDeseada, humFluctuacion, cantAmb);
+            this.validarDatosTempHum(tempmin, tempmax, humDeseada, humFluctuacion, lat, lng, cantAmb);
         }
     }
 
-    validarDatosTempHum(tempmin, tempmax, humDeseada, humFluctuacion, cantAmb) {
+    validarDatosTempHum(tempmin, tempmax, humDeseada, humFluctuacion, lat, lng, cantAmb) {
                     if (tempmax > tempmin) {
-                        this.datosManuales(tempmin, tempmax, humDeseada, humFluctuacion, cantAmb);
+                        this.simularContextoAmbienteManual(tempmin, tempmax, humDeseada, humFluctuacion, lat, lng, cantAmb);
                     } else {
                         Swal.fire({
                             title: '¡Atención!',
@@ -474,22 +506,25 @@ class SimularClimaPuntosYHoras {
                     }
     }
 
-    datosManuales(tempmin, tempmax, humDeseada, humFluctuacion, cantAmb) {
+    simularContextoAmbienteManual(tempmin, tempmax, humDeseada, humFluctuacion, lat, lng, cantAmb) {
         // const inicio = performance.now();
-        const info = { tempmin, tempmax, humDeseada, humFluctuacion, cantAmb};
-        this.postJSON('/datosManuales', info, (data) => {
-            this.dataGlobal.id_Simulacion = data.id_Simulacion;
-            this.dataGlobal.fechaHora_Simulacion = data.fechaHora_Generacion;
-            this.dataGlobal.clima = data.clima;
+        const info = { tempmin, tempmax, humDeseada, humFluctuacion, lat, lng, cantAmb};
+        this.postJSON('/simularContextoAmbienteManual', info, (data) => {
+            //this.dataGlobal.id_Simulacion = data.id_Simulacion;
+            //this.dataGlobal.fechaHora_Simulacion = data.fechaHora_Generacion;
+            //this.dataGlobal.clima = data.clima;
+            this.consolidarDatosSimulados(data, 2);
             this.agregarTempHumTabla(data.clima);
         });
     }
 
-    datosRealesAPI(city, cp, lat, lng, cantAmb) {
-        this.postJSON('/datosRealesAPI', { city, cp, lat, lng, cantAmb}, (data) => {
-            this.dataGlobal.id_Simulacion = data.id_Simulacion;
-            this.dataGlobal.fechaHora_Simulacion = data.fechaHora_Generacion;
-            this.dataGlobal.clima = data.clima;
+    simularContextoAmbienteAPI(lat, lng, cantAmb) {
+        const info = { lat, lng, cantAmb }
+        this.postJSON('/simularContextoAmbienteAPI', info, (data) => {
+            //this.dataGlobal.id_Simulacion = data.id_Simulacion;
+            //this.dataGlobal.fechaHora_Simulacion = data.fechaHora_Generacion;
+            //this.dataGlobal.clima = data.clima;
+            this.consolidarDatosSimulados(data, 2);
             this.agregarTempHumTabla(data.clima);
         });
     }
@@ -508,6 +543,7 @@ class SimularClimaPuntosYHoras {
             }
         })
 
+        document.getElementById('mapaIframe').src = '/static/mapa.html';
         this.saveBtn.disabled = false;
     }
 
@@ -528,7 +564,22 @@ class SimularClimaPuntosYHoras {
     }
 
     guardarJSON() {
-        const contenido = JSON.stringify(this.dataGlobal, null, 2);
+        // Función auxiliar para obtener ISO String en hora local (UTC-3)
+        const obtenerFechaHoraLocal = () => {
+            const ahora = new Date();
+            const offset = ahora.getTimezoneOffset() * 60000; // Desfasaje en ms
+            return new Date(ahora.getTime() - offset).toISOString().slice(0, 19);
+        };
+
+        // Agrega metadatos de exportación e integridad
+        const dataAExportar = {
+            metadataExport: {
+                fechaHora_Simulacion: obtenerFechaHoraLocal(),
+                exportadoPor: "Software de Generacion de Datos de Prueba"
+            },
+            contenidoSimulacion: this.dataGlobal
+        };
+        const contenido = JSON.stringify(dataAExportar, null, 2);
         const blob = new Blob([contenido], { type: 'application/json' });
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -536,11 +587,25 @@ class SimularClimaPuntosYHoras {
         a.download = 'escenario_sintetico.json';
         a.click();
         try {
-            JSON.parse(JSON.stringify(this.dataGlobal));
+            JSON.parse(contenido);
             console.log("JSON válido");
         } catch (error) {
             console.log("JSON inválido");
         }
+    }
+
+    consolidarDatosSimulados(data, b) {
+        this.dataGlobal.id_Simulacion = data.id_Simulacion;
+        //this.dataGlobal.fechaHora_Simulacion = data.fechaHora_Generacion;
+        if (b == 1) {
+            this.dataGlobal.ubicacion = data.puntosGeograficos;
+        } 
+        else if (b == 2) {
+            this.dataGlobal.clima = data.clima;
+        } 
+        else {
+            this.dataGlobal.tiempo = data.tiempo;
+        }             
     }
 }
 

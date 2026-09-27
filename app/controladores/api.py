@@ -5,6 +5,7 @@ import folium
 import math
 from shapely.geometry import Point, Polygon
 from datetime import datetime
+from timezonefinder import TimezoneFinder
 
 class ApiController:
     def __init__(self):
@@ -13,12 +14,15 @@ class ApiController:
         self.seed = 0
         self.id_Simulacion = 0
         self.primera_sim = True
+        self.mapa_Geo = 0
         self.register_routes()
 
     def register_routes(self):
         self.api_bp.route('/reiniciarSimulacion', methods=['POST'])(self.reiniciarSimulacion)
-        self.api_bp.route('/datosManuales', methods=['POST'])(self.datosManuales)
-        self.api_bp.route('/datosRealesAPI', methods=['POST'])(self.datosRealesAPI)
+        self.api_bp.route('/reiniciarBanderaMapa', methods=['POST'])(self.reiniciarBanderaMapa)
+        self.api_bp.route('/obtenerLatLon', methods=['POST'])(self.obtenerLatLon)
+        self.api_bp.route('/simularContextoAmbienteManual', methods=['POST'])(self.simularContextoAmbienteManual)
+        self.api_bp.route('/simularContextoAmbienteAPI', methods=['POST'])(self.simularContextoAmbienteAPI)
         self.api_bp.route('/simularContextoGeografico', methods=['POST'])(self.simularContextoGeografico)
         self.api_bp.route('/simularContextoTemporal', methods=['POST'])(self.simularContextoTemporal)
         # self.api_bp.route('/api', methods=['POST'])(self.api)
@@ -30,36 +34,63 @@ class ApiController:
         self.primera_sim = True
         return jsonify({'status': 'ok', 'mensaje': 'Flag de simulación reiniciado'}), 200
 
+    def reiniciarBanderaMapa(self):
+        self.mapa_Geo = 0
+
+    def obtenerLatLon(self):
+        data = {'lat': '', 'lng': ''}
+        info = request.get_json()
+        apiser = ApiService(Config.api_base_url_combo_city, Config.api_key, Config.api_type,
+                                    Config.api_base_url_weather, Config.api_key_weather, Config.api_type_weather)
+        if (info.get('city')):
+            citydata = apiser.buscar_coord_ciudad(info.get('city'))
+            lat = citydata['results'][0]['lat']
+            lon = citydata['results'][0]['lon']
+        elif (info.get('cp')):
+            cpdata = apiser.buscar_coord_ciudad(info.get('cp'))
+            lat = cpdata['results'][0]['lat']
+            lon = cpdata['results'][0]['lon']
+        data['lat'] = lat
+        data['lng'] = lon
+        return data
+
 ############################# --- CONTEXTO TEMPORAL --- #############################
     def simularContextoTemporal(self):
-        data = {'id_Simulacion': self.id_Simulacion, 'fechaHora_Generacion': datetime.now(), 'tiempo': []}
+        #simuTiempo = {'id_Simulacion': self.id_Simulacion, 'fechaHora_Generacion': datetime.now(), 'tiempo': []}
+        simuTiempo = {'id_Simulacion': self.id_Simulacion, 'tiempo': []}
         info = request.get_json()
         i = 0
+        tf = TimezoneFinder()
         #Tiempo libre o disponible
         # menor a 15 min, entre 15 a 30 min, entre 30 a 50 min y mas de 1hr
         try:
             if (self.primera_sim):
                 self.id_Simulacion += 1
-                data['id_Simulacion'] = self.id_Simulacion
+                simuTiempo['id_Simulacion'] = self.id_Simulacion
                 self.primera_sim = False
         except Exception as e:
             print(f"Error procesando formato de hora: {e}")
-        if info.get('b') == 0:
-            while i < info.get('cantTLibre'):
-                hrnueva, minnuevos = self.generar_hora(info)
+        while i < info.get('cantDatosT'):
+            hrnueva, minnuevos = self.generar_hora(info)
+            if info.get('b') == 0:
+            #while i < info.get('cantDatosT'):
+            #    hrnueva, minnuevos = self.generar_hora(info)
                 tiempo_libre = self.laplace() #minutos
-                data['tiempo'].append({'tiempo_libre': tiempo_libre, 'hr_del_dia': f"{hrnueva}:{minnuevos}"})
-                i+=1
-            data['tiempo'].append({'unidad_medida_tiempo_libre': 'minutos / hora', 'unidad_medida_hr_del_dia': '24hr'})
-        else:
-            while i < info.get('cantTLibre'):
-                hrnueva, minnuevos = self.generar_hora(info)
+                #simuTiempo['tiempo'].append({'tiempo_libre': tiempo_libre, 'hr_del_dia': f"{hrnueva}:{minnuevos}"})
+                #i+=1
+            else:
+            #while i < info.get('cantDatosT'):
+            #    hrnueva, minnuevos = self.generar_hora(info)
                 tiempo_libre = self.transInvFunDisc(info.get('p1'),info.get('p2'),info.get('p3')) #minutos
-                data['tiempo'].append({'tiempo_libre': tiempo_libre, 'hr_del_dia': f"{hrnueva}:{minnuevos}"})
-                i+=1
-            data['tiempo'].append({'unidad_medida_tiempo_libre': 'minutos', 'unidad_medida_hr_del_dia': '24hr'})
-        return jsonify(data)
-        #return jsonify(data['tiempo'])
+                #simuTiempo['tiempo'].append({'tiempo_libre': tiempo_libre, 'hr_del_dia': f"{hrnueva}:{minnuevos}"})
+                #i+=1
+            simuTiempo['tiempo'].append({'tiempo_libre': tiempo_libre, 'hr_del_dia': f"{hrnueva}:{minnuevos}"})
+            i+=1
+        zona_horaria = tf.timezone_at(lat=info.get('lat'), lng=info.get('lng'))
+        simuTiempo['tiempo'].append({'unidad_medida_tiempo_libre': 'minutos / hora', 'unidad_medida_hr_del_dia': '24hr', 'zona_horaria': zona_horaria})
+        if self.mapa_Geo != 1:
+            self.generate_map(info.get('lat'), info.get('lng'), 0, 0)
+        return jsonify(simuTiempo)
 
     def generar_hora(self, info):
         #Hora del día
@@ -96,68 +127,61 @@ class ApiController:
 
 ############################# --- CONTEXTO AMBIENTAL --- #############################
 
-    def datosManuales(self):
-        data = {'id_Simulacion': self.id_Simulacion, 'fechaHora_Generacion': datetime.now(), 'clima': []}
+    def simularContextoAmbienteManual(self):
+        #simuAmb = {'id_Simulacion': self.id_Simulacion, 'fechaHora_Generacion': datetime.now(), 'clima': []}
+        simuAmb = {'id_Simulacion': self.id_Simulacion, 'clima': []}
         cont = 0
         info = request.get_json()
         while cont < int(info.get('cantAmb')):
             temp = self.uniforme(info.get('tempmin'), info.get('tempmax'))
             hum = self.normal(info.get('humDeseada'), info.get('humFluctuacion')) # No aplico la multiplicacion por 0.1 porque ya debería conocer la desviación estandar, diferente el caso de que cuando la obtengo de la API
-            if hum > 100:
-                hum = 100
-            elif hum < 0:
-                hum = 0
-            if (self.primera_sim):
-                self.id_Simulacion += 1
-                # round(temp, 1) para que tome 1 decimal, el dato ya es del tipo float
-                data['clima'].append({'temp': round(temp, 1), 'hum': int(hum)})
-                self.primera_sim = False
-            else:
-                data['clima'].append({'temp': round(temp, 1), 'hum': int(hum)})
+            datosAmbGenerados = self.agregarDatosClima (temp, hum, simuAmb)
             cont+=1
-        data['clima'].append({'unidad_medida_temp': 'grados', 'unidad_medida_hum': 'porcentaje'})
-        return jsonify(data)
+        datosAmbGenerados['clima'].append({'unidad_medida_temp': 'grados', 'unidad_medida_hum': 'porcentaje'})
+        if self.mapa_Geo != 1:
+            self.generate_map(info.get('lat'), info.get('lng'), 0, 0)
+        return jsonify(datosAmbGenerados)
 
-    def datosRealesAPI(self):
-        data = {'id_Simulacion': self.id_Simulacion, 'fechaHora_Generacion': datetime.now(), 'clima': []}
+    def simularContextoAmbienteAPI(self):
+        #simuAmb = {'id_Simulacion': self.id_Simulacion, 'fechaHora_Generacion': datetime.now(), 'clima': []}
+        simuAmb = {'id_Simulacion': self.id_Simulacion, 'clima': []}
         cont = 0
         apiser = ApiService(Config.api_base_url_combo_city, Config.api_key, Config.api_type,
                             Config.api_base_url_weather, Config.api_key_weather, Config.api_type_weather)
         info = request.get_json()
-        if info.get('city'):
-            pronostico = apiser.clima(info.get('city'))
-        elif info.get('cp'):
-            cpdata = apiser.buscar_coord_ciudad(info.get('cp'))
-            latlon = str(cpdata['results'][0]['lat']) + ", " + str(cpdata['results'][0]['lon'])
-            pronostico = apiser.clima(latlon)
-        else:
-            latlon = info.get('lat') + ", " + info.get('lng')
-            pronostico = apiser.clima(latlon)
-        print ()
+        latlon = str(info.get('lat')) + ", " + str(info.get('lng'))
+        pronostico = apiser.clima(latlon)
         while cont < int(info.get('cantAmb')):
             temp = self.uniforme(pronostico['forecast']['forecastday'][0]['day']['mintemp_c'], pronostico['forecast']['forecastday'][0]['day']['maxtemp_c'])
             desviacion_estandar = pronostico['forecast']['forecastday'][0]['day']['avghumidity'] * 0.1 # se multiplica por 0.1 (10%) = 5% de desviacion propuesta por el fabricante + 5% para abarcar posibles ruidos provenientes del ambiente
             hum = self.normal(pronostico['forecast']['forecastday'][0]['day']['avghumidity'], desviacion_estandar)
-            if hum > 100:
-                hum = 100
-            elif hum < 0:
-                hum = 0
-            if (self.primera_sim):
-                self.id_Simulacion += 1
-                # round(temp, 1) para que tome 1 decimal, el dato ya es del tipo float
-                data['clima'].append({'temp': round(temp, 1), 'hum': int(hum)})
-                self.primera_sim = False
-            else:
-                # round(temp, 1) para que tome 1 decimal, el dato ya es del tipo float
-                data['clima'].append({'temp': round(temp, 1), 'hum': int(hum)})
+            datosAmbGenerados = self.agregarDatosClima (temp, hum, simuAmb)
             cont+=1
-        data['clima'].append({'unidad_medida_temp': 'grados', 'unidad_medida_hum': 'porcentaje'})
-        return jsonify(data)    
+        datosAmbGenerados['clima'].append({'unidad_medida_temp': 'grados', 'unidad_medida_hum': 'porcentaje'})
+        if self.mapa_Geo != 1:
+            self.generate_map(info.get('lat'), info.get('lng'), 0, 0)
+        return jsonify(datosAmbGenerados)
+
+    def agregarDatosClima (self, temp, hum, simuAmb):
+        if hum > 100:
+            hum = 100
+        elif hum < 0:
+            hum = 0
+        if (self.primera_sim):
+            self.id_Simulacion += 1
+            # round(temp, 1) para que tome 1 decimal, el dato ya es del tipo float
+            simuAmb['clima'].append({'temp': round(temp, 1), 'hum': int(hum)})
+            self.primera_sim = False
+        else:
+            # round(temp, 1) para que tome 1 decimal, el dato ya es del tipo float
+            simuAmb['clima'].append({'temp': round(temp, 1), 'hum': int(hum)})
+        return simuAmb
 
 ############################# --- CONTEXTO GEOGRAFICO --- #############################
 
     def simularContextoGeografico(self):
-        data = {'id_Simulacion': self.id_Simulacion, 'fechaHora_Generacion': datetime.now().isoformat(), 'puntosGeograficos': []}
+        #simuGeo = {'id_Simulacion': self.id_Simulacion, 'fechaHora_Generacion': datetime.now().isoformat(), 'puntosGeograficos': []}
+        simuGeo = {'id_Simulacion': self.id_Simulacion, 'puntosGeograficos': []}
         etiqueta_nombre = 1
         encontrados = 0
         lim_inf = 0
@@ -177,36 +201,25 @@ class ApiController:
         info = request.get_json()
         if (self.primera_sim):
             self.id_Simulacion += 1
-            data['id_Simulacion'] = self.id_Simulacion
+            simuGeo['id_Simulacion'] = self.id_Simulacion
             self.primera_sim = False
-        apiser = ApiService(Config.api_base_url_combo_city, Config.api_key, Config.api_type,
-                            Config.api_base_url_weather, Config.api_key_weather, Config.api_type_weather)
-        if (info.get('city')):            
-            citydata = apiser.buscar_coord_ciudad(info.get('city'))
-            lat = citydata['results'][0]['lat']
-            lon = citydata['results'][0]['lon']
-        elif (info.get('cp')):
-            cpdata = apiser.buscar_coord_ciudad(info.get('cp'))
-            lat = cpdata['results'][0]['lat']
-            lon = cpdata['results'][0]['lon']
-        else:
-            lat = float(info.get('lat'))
-            lon = float(info.get('lon'))
+        lat = float(info.get('lat'))
+        lon = float(info.get('lon'))
         radio = info.get('radio')
-        while encontrados < int(info.get('cantPoints')):
+        while encontrados < int(info.get('cantPuntos')):
             posX, posY = self.uniformPosGeogr(lim_inf, lim_sup, lat, lon, radio)
             punto = Point(posY, posX)
             esta_dentro = poligono.contains(punto)
             if (esta_dentro):
-                data['puntosGeograficos'].append({'nombre': f'Ubicacion {etiqueta_nombre}', 'categoria': info.get('category'), 'lat': posX, 'lon': posY, 'en_UNSE': 'Si'})
+                simuGeo['puntosGeograficos'].append({'nombre': f'Ubicacion {etiqueta_nombre}', 'categoria': info.get('category'), 'lat': posX, 'lon': posY, 'en_UNSE': 'Si'})
             else:
-                data['puntosGeograficos'].append({'nombre': f'Ubicacion {etiqueta_nombre}', 'categoria': info.get('category'), 'lat': posX, 'lon': posY, 'en_UNSE': 'No'})
+                simuGeo['puntosGeograficos'].append({'nombre': f'Ubicacion {etiqueta_nombre}', 'categoria': info.get('category'), 'lat': posX, 'lon': posY, 'en_UNSE': 'No'})
             etiqueta_nombre += 1
             encontrados += 1
-        self.generate_map(lat, lon, radio, data['puntosGeograficos'])
-        data['puntosGeograficos'].append({'unidad_medida_coordenadas_lat_lon': 'grados'})
-        return jsonify(data)
-        # return jsonify(data['puntos'])
+        self.mapa_Geo = 1 # 1 es para indicar que mostrara el mapa con los puntos sin que se solape con el mapa del ambiente o los tiempos
+        self.generate_map(lat, lon, radio, simuGeo['puntosGeograficos'])
+        simuGeo['puntosGeograficos'].append({'unidad_medida_coordenadas_lat_lon': 'grados'})
+        return jsonify(simuGeo)
 
 ############################# --- SOLAPA API QUE EMULA LO PEDIDO POR LUCIANO DESDE LA INTERFAZ --- #############################
 
@@ -336,14 +349,18 @@ class ApiController:
 ############################# --- GENERAR MAPA ---  #############################
 
     def generate_map(self, lat, lon, radio, places):
-        mapa = folium.Map(location=(lat, lon), zoom_start=15)
-        folium.Circle(location=(lat,lon), radius=radio, color="crimson", fill=True, fill_color="crimson").add_to(mapa)
-        folium.Marker(location=(lat, lon), icon=folium.Icon(color='red', prefix='fa', icon='male'), tooltip="Ubicación central").add_to(mapa)
-        for place in places:
-            html = "<b>Nombre</b>"+"<br>"+place['nombre']+"<br><br>"+"<b>Categoria</b>"+"<br>"+place['categoria']
-            iframe = folium.IFrame(html)
-            popup = folium.Popup(iframe, min_width=200, max_width=200)
-            folium.Marker(location=(place['lat'], place['lon']), popup=popup).add_to(mapa)
+        if self.mapa_Geo == 1:
+            mapa = folium.Map(location=(lat, lon), zoom_start=15)
+            folium.Circle(location=(lat,lon), radius=radio, color="crimson", fill=True, fill_color="crimson").add_to(mapa)
+            folium.Marker(location=(lat, lon), icon=folium.Icon(color='red', prefix='fa', icon='male'), tooltip="Ubicación central").add_to(mapa)
+            for place in places:
+                html = "<b>Nombre</b>"+"<br>"+place['nombre']+"<br><br>"+"<b>Categoria</b>"+"<br>"+place['categoria']
+                iframe = folium.IFrame(html)
+                popup = folium.Popup(iframe, min_width=200, max_width=200)
+                folium.Marker(location=(place['lat'], place['lon']), popup=popup).add_to(mapa)
+        else:
+            mapa = folium.Map(location=(lat, lon), zoom_start=15)
+            folium.Marker(location=(lat, lon), icon=folium.Icon(color='red', prefix='fa', icon='male'), tooltip="Su ubicación").add_to(mapa)
         mapa.save("app/static/mapa.html")
 
 ############################# --- EXPORTAR ---  #############################
