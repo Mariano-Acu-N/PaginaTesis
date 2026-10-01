@@ -360,9 +360,6 @@ class SimularClimaPuntosYHoras {
     generarHr_Tiempos(hrdesde, hrhasta, cantDatosT, p1, p2, p3, p4, lat, lng, b) {
         const info = { hrdesde, hrhasta, cantDatosT, p1, p2, p3, p4, lat, lng, b };
         this.postJSON('/simularContextoTemporal', info, (data) => {
-            //this.dataGlobal.id_Simulacion = data.id_Simulacion;
-            //this.dataGlobal.fechaHora_Simulacion = data.fechaHora_Generacion;
-            //this.dataGlobal.tiempo = data.tiempo;
             this.consolidarDatosSimulados(data, 3);
             this.agregarTiempoLibreATablaCoord(data.tiempo)
         });
@@ -510,9 +507,6 @@ class SimularClimaPuntosYHoras {
         // const inicio = performance.now();
         const info = { tempmin, tempmax, humDeseada, humFluctuacion, lat, lng, cantAmb};
         this.postJSON('/simularContextoAmbienteManual', info, (data) => {
-            //this.dataGlobal.id_Simulacion = data.id_Simulacion;
-            //this.dataGlobal.fechaHora_Simulacion = data.fechaHora_Generacion;
-            //this.dataGlobal.clima = data.clima;
             this.consolidarDatosSimulados(data, 2);
             this.agregarTempHumTabla(data.clima);
         });
@@ -521,9 +515,6 @@ class SimularClimaPuntosYHoras {
     simularContextoAmbienteAPI(lat, lng, cantAmb) {
         const info = { lat, lng, cantAmb }
         this.postJSON('/simularContextoAmbienteAPI', info, (data) => {
-            //this.dataGlobal.id_Simulacion = data.id_Simulacion;
-            //this.dataGlobal.fechaHora_Simulacion = data.fechaHora_Generacion;
-            //this.dataGlobal.clima = data.clima;
             this.consolidarDatosSimulados(data, 2);
             this.agregarTempHumTabla(data.clima);
         });
